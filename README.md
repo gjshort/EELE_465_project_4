@@ -1,4 +1,4 @@
-# EELE 465 Project 4
+# EELE 465 project 4
 
 
 ## Repository organization
