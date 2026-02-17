@@ -34,3 +34,13 @@ If you're not using `uv`, just run directly with python:
 ```bash
 python3 mcu_interface.py
 ```
+
+## Modifying the code
+
+`mcu_interface_worker()` is the primary function you need to modify. That function is what you will use to read from write to the UART serial port. In essence, that thread is how you will interface with the MCU. You will essentially be doing some serial reads and writes using `pyserial` and putting/getting values from some queues.
+
+Depending on how your MCU expects the date/time to be formatted when being set via UART, you will need to modify the `_sync_date_time_callback` method to format the datetime string how your MCU wants.
+
+Beyond that, you shouldn't have to modify anything unless you want to.
+
+Read through the code and comments for more information. Again, you don't have to worry about the GUI things---the layout, callbacks, etc.---just worry about the `mcu_interface_worker()` thread.
