@@ -78,7 +78,7 @@ class App(tk.Tk):
 
         temperature_label = ttk.Label(temperature_frame, text="Temperature:")
 
-        self._temperature = tk.IntVar(value=DEFAULT_TEMPERATURE_VALUE)
+        self._temperature = tk.DoubleVar(value=DEFAULT_TEMPERATURE_VALUE)
         temperature_display = ttk.Label(
             temperature_frame, textvariable=self._temperature
         )
@@ -203,7 +203,7 @@ def mcu_interface_worker(
     """
     TEMPERATURE_UPDATE_PERIOD = 1
     last_temperature_update_time = 0
-    temperature = 1
+    temperature = 1.0
 
     rtc_date_time = None
 
