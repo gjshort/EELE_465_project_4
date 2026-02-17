@@ -1,4 +1,4 @@
-# Project 3 workload distribution
+# Workload distribution
 
 Fill out this markdown file with a short description of what modules each partner is primarily responsible for, along with a list of the requirements each partner is primarily responsible for.
 
