@@ -163,7 +163,7 @@ class App(tk.Tk):
         self._gui_rtc_date_time_queue.put(formatted_datetime)
 
     def _set_moving_avg_window_size_callback(self):
-        # Push the window size into the queue for the other thread to process
+        """Send the new moving average window size to the moving_avg_window_size_queue"""
         self._moving_avg_window_size_queue.put(self._moving_avg_window_size.get())
 
 
