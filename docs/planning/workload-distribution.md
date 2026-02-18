@@ -2,9 +2,10 @@
 
 Fill out this markdown file with a short description of what modules each partner is primarily responsible for, along with a list of the requirements each partner is primarily responsible for.
 
-**Partner 1**
+**Griffin Short**
 
 <!-- Short description of subsystems / modules that this partner is primarily responsible for. -->
+
 
 <!-- List of requirements that this partner is primarily responsible for -->
 Requirements:
@@ -12,12 +13,22 @@ Requirements:
 - Requirement 1
 - Requirement 3
 
-**Partner 2**
+**Gabe Story**
 
 <!-- Short description of subsystems / modules that this partner is primarily responsible for. -->
+Will be pirmarily responsible for the Slide potentiometer. Includes mechanism, policy that controls LED pattern period.
+
+Will also be primarily responsible for the WS28128 LED strip subsystem. Includes mechanism, initialization for GPIO setup, and buttons that control policy regarding LED Strip. 
 
 <!-- List of requirements that this partner is primarily responsible for -->
 Requirements:
 
--
--
+- Requirement 6
+    - spec 6.1
+- Requirement 7
+    - spec 7.1 - 7.4
+
+- Requirement 8
+- Requirement 9
+    - spec 9.1
+- Requirement 10 (If time allows)
