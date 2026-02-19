@@ -5,13 +5,20 @@ Fill out this markdown file with a short description of what modules each partne
 **Griffin Short**
 
 <!-- Short description of subsystems / modules that this partner is primarily responsible for. -->
+Will be responsible for the temperature sensor, ADC, and UART control. If time permits, I will also work on the GUI. 
 
+Will also work on getting I2C/UART code from project 3 working.
 
 <!-- List of requirements that this partner is primarily responsible for -->
 Requirements:
 
 - Requirement 1
+- Requirement 2
 - Requirement 3
+- Requirement 4
+- Requirement 5
+
+- Some or all of requirements 11-14 (time permitting)
 
 **Gabe Story**
 
