@@ -9,28 +9,19 @@
 
 #include <stdint.h>
 
-    // I2C address
-    #define MCP7940N_I2C_ADDR       0x6F;
+#define RXIFG0 0x16
+#define TXIFG0 0x18
 
-    // RTC Time Registers
-    #define RTC_SEC_REG             0x00;               // seconds (also includes ST bit)
-    #define RTC_MIN_REG             0x01;               // minutes
-    #define RTC_HR_REG              0x02;               // hours
-    #define RTC_WKDAY_REG           0x03;               // weekday (also inlcudes VBAT bit)
-    #define RTC_DATE_REG            0x04;               // day of the month
-    #define RTC_MTH_REG             0x05;               // month
-    #define RTC_YR_REG              0x06;               // year
-    #define CONTROL_REG             0x07;               // control / mode
-
-    // ST and VBATEN configuration bits
-    #define ST_BIT                  0x80;               // start oscillator bit (held in SEC register)
-    #define VBATEN_BIT              0x08;               // enable backup battery (held in WKDAY register)
+typedef enum
+{
+    I2C_READ,
+    I2C_WRITE
+} I2C_MODE;
 
 /***********
 * struct to
 * help manage the data 
 *******************************/
-
 typedef struct {
 
     uint8_t seconds;        // 0-59
@@ -69,7 +60,9 @@ typedef struct {
 extern Serial s;
 
 void init_eUSCI_A1();
-void init_eUSCI_B0();
+void init_eUSCI_B0_i2c();
+void set_eUSCI_B0_slave_addr(uint8_t);
+void set_eUSCI_B0_count(uint8_t);
 void init_eUSCI_GPIO();
 void init_timerB1();
 void CurrentTimePrompt();

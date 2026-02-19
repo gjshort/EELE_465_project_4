@@ -45,22 +45,53 @@ void init_eUSCI_A1() {                     // Setup eUSCI_A1, baud rate 112500
 
 }
 
-void init_eUSCI_B0() {                  // Setup eUSCI_B0 to use SMCLK. Master mode
+/**
+ * Initialize the B0 eUSCI port for I2C
+ * - Slave address set 
+ */
+void init_eUSCI_B0_i2c() {                  
 
     UCB0CTLW0 |= UCSWRST;
 
     UCB0CTLW0 |= UCSSEL__SMCLK;
-    UCB0BRW = 10;
+    UCB0BRW = 10;                       // Divide by 10
 
-    UCB0CTLW0 |= UCMODE_3;
-    UCB0CTLW0 |= UCMST;                 // I2C mode, setup in master mode
-    UCB0I2CSA = MCP7940N_I2C_ADDR;
+    UCB0CTLW0 |= UCMODE_3;              // I2C Mode
+    UCB0CTLW0 |= UCMST;                 // Master
 
-    UCB0CTLW1 |= UCASTP_2;
-    UCB0TBCNT |= sizeof(m.WriteBuffr);
+    UCB0CTLW1 |= UCASTP_2;              // Auto stop
+
+    P1SEL1 &= ~BIT3;                    // P1.3 for SCL
+    P1SEL0 |= BIT3;
+    P1SEL1 &= ~BIT2;                    // P1.2 for SDA
+    P1SEL0 |= BIT2;
 
     UCB0CTLW0 &= ~UCSWRST;              // take eUSCI_B0 out of software reset
 
+    UCB0IE |= UCTXIE0;                  //Enable wait for Tx msg IRQ
+    UCB0IE |= UCRXIE0;                  //Enable Rx IRQ
+
+}
+
+/**
+ * Sets the slave address for eUSCI B0
+ */
+void set_eUSCI_B0_slave_addr(uint8_t slave_addr)
+{
+    UCB0CTLW0 |= UCSWRST;
+    UCB0I2CSA = slave_addr;             // I2C slave address
+    UCB0CTLW0 &= ~UCSWRST;
+}
+
+/**
+ * Sets the count of bytes to be read or
+ * received before generating an auto-stop
+ */
+void set_eUSCI_B0_count(uint8_t tbcnt)
+{
+    UCB0CTLW0 |= UCSWRST;
+    UCB0TBCNT = tbcnt;
+    UCB0CTLW0 &= ~UCSWRST;
 }
 
 void init_eUSCI_GPIO() {
@@ -91,6 +122,7 @@ void init_timerB1() {
 
 }
 
+/*
 // This function gets called when the user prsses 't' into the terminal, this function simply prompts "What's the current time? "
 void CurrentTimePrompt() {
 
@@ -276,3 +308,5 @@ void TheTimeWeDontHave() {
     for(s.k=0; s.k<100; s.k++){}
 
 }
+
+*/
