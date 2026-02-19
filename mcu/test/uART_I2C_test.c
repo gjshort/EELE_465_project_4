@@ -4,6 +4,7 @@
 volatile unsigned char SetTimeSerial[7];
 volatile int rxIndex = -1;
 int i;
+MCP7940N_time newTime;
 
 int main(void)
 {
@@ -62,7 +63,6 @@ int main(void)
             TB1CCTL0 |= CCIE;
 
             // populate RTC time struct with received time from serial console
-            MCP7940N_time newTime;
             newTime.seconds = SetTimeSerial[0];
             newTime.minutes = SetTimeSerial[1];
             newTime.hours   = SetTimeSerial[2];
@@ -114,7 +114,7 @@ __interrupt void ISR_EUSCI_A1(void) {
                 CurrentTimePrompt();
                 rxIndex = 0;
             } else if(UCA1RXBUF == 'g') {
-                MCP7940N_GetTime();
+                MCP7940N_GetTime(&newTime);
             }
         } else {
             SetTimeSerial[rxIndex++] = UCA1RXBUF;

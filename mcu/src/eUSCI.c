@@ -10,7 +10,7 @@
 
 Serial s = {
     {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07},
-    "The current time is ...",
+    "The cur",
     "What is the current time? ",
     "The current time is: \r\n oh.... uhhh hold on...",
     "The current time is: \r\n huh..... nothing still",

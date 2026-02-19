@@ -4,9 +4,10 @@
 * Class:   EELE 465
 * Purpose: header file to take control of uART protocol driver
 *******************************************************************/
+#ifndef eUSCI_H
+#define eUSCI_H
 
 #include <stdint.h>
-#pragma once
 
     // I2C address
     #define MCP7940N_I2C_ADDR       0x6F;
@@ -66,3 +67,17 @@ typedef struct {
 } Serial;
 
 extern Serial s;
+
+void init_eUSCI_A1();
+void init_eUSCI_B0();
+void init_eUSCI_GPIO();
+void init_timerB1();
+void CurrentTimePrompt();
+void MCP7940N_SetTime(MCP7940N_time*);
+void MCP7940N_GetTime(MCP7940N_time*);
+uint8_t BCDtoDEC(uint8_t);
+uint8_t DECtoBCD(uint8_t);
+void WriteRTC();
+void TheTimeWeDontHave();
+
+#endif
