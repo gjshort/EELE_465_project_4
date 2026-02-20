@@ -23,6 +23,7 @@ Serial s = {
     0
 };
 
+/*
 MCP7940N_time m = {
     0,
     0,
@@ -33,6 +34,7 @@ MCP7940N_time m = {
     0,
     {0}
 };
+*/
 
 void init_eUSCI_A1() {                     // Setup eUSCI_A1, baud rate 112500
 
@@ -81,6 +83,8 @@ void set_eUSCI_B0_slave_addr(uint8_t slave_addr)
     UCB0CTLW0 |= UCSWRST;
     UCB0I2CSA = slave_addr;             // I2C slave address
     UCB0CTLW0 &= ~UCSWRST;
+    UCB0IE |= UCTXIE0;                  //Enable wait for Tx msg IRQ
+    UCB0IE |= UCRXIE0;   
 }
 
 /**
@@ -92,6 +96,8 @@ void set_eUSCI_B0_count(uint8_t tbcnt)
     UCB0CTLW0 |= UCSWRST;
     UCB0TBCNT = tbcnt;
     UCB0CTLW0 &= ~UCSWRST;
+    UCB0IE |= UCTXIE0;                  //Enable wait for Tx msg IRQ
+    UCB0IE |= UCRXIE0;   
 }
 
 void init_eUSCI_GPIO() {
