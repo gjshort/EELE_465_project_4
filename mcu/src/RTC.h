@@ -37,5 +37,6 @@ typedef struct MCP7940N_time
 } MCP7940N_time;
 
 void rtc_write_time_reg(MCP7940N_time*, uint8_t*);
+void rtc_read_time_reg(MCP7940N_time*, uint8_t*);
 
 #endif

@@ -5,12 +5,12 @@
 #include "rtc.h"
 
 volatile I2C_MODE rtc_mode;
-volatile uint8_t rtc_reg_ptr;
 
 // Interrupt flags for main loop to service
 volatile bool i2c_rx_irq;
 volatile bool i2c_tx_irq;
 volatile bool write_to_rtc;
+volatile bool read_from_rtc;
 
 int main(void)
 {
@@ -35,10 +35,10 @@ int main(void)
     TB1CTL |= ID__4;            // Divide by 4
     TB1EX0 |= TBIDEX__5;        // Divide by 5
 
-    TB1CCR0 = 50000;        // 1 sec. - Heartbeat LED duty cycle
+    TB1CCR0 = 50000;            // 1 sec. - Heartbeat LED duty cycle
 
-    TB1CCTL0 &= ~CCIFG;         //Clear IRQ flag       
-    TB1CCTL0 |= CCIE;           //Enable local interrupt
+    //TB1CCTL0 &= ~CCIFG;       // Enable Interrupt
+    //TB1CCTL0 |= CCIE;
 
     // Final Init
     PM5CTL0 &= ~LOCKLPM5;
@@ -49,22 +49,41 @@ int main(void)
     {
 
         //--------- IRQ Flag Checking ------------
+        // Start a write
         if(write_to_rtc == true)
         {
             write_to_rtc = false;
             set_eUSCI_B0_count(RTC_NUM_TIME_REGS + 1);  // Write reg ptr + time registers
             UCB0CTLW0 |= UCTR;                          // Set B0 I2C to Tx mode
             UCB0CTLW0 |= UCTXSTT;                       // Start transmission
-            while(!(UCB0IFG & UCTXIFG)) {}       
         }
 
+        // Transmit register pointer preparing for read
+        if(read_from_rtc == true)
+        {
+            read_from_rtc = false;
+            set_eUSCI_B0_count(1);
+            UCB0CTLW0 |= UCTR;
+            UCB0CTLW0 |= UCTXSTT;
+        }
+
+        // Handle I2C Rx IRQ
         if(i2c_rx_irq == true)
         {
             i2c_rx_irq = false;
-            // Do something with I2C Rx Buffer
+            rtc_read_time_reg(&rtc_time, &rtc_reg_ptr);
+            if(rtc_reg_ptr == RTC_NUM_TIME_REGS - 1)    // Done reading
+            {
+                rtc_reg_ptr = 0;
+            }
+            else                                        // Still reading
+            {
+                rtc_reg_ptr++;
+            }
             
         }
 
+        // Handle I2C Tx IRQ
         if(i2c_tx_irq == true)
         {
             i2c_tx_irq = false;
@@ -74,6 +93,9 @@ int main(void)
                 if(rtc_reg_ptr == RTC_NUM_TIME_REGS)    // Done writing
                 {
                     rtc_reg_ptr = 0;
+                    // Enable TB1 IRQ after writing
+                    TB1CCTL0 &= ~CCIFG;     
+                    TB1CCTL0 |= CCIE;
                 }
                 else                                    // Still writing
                 {
@@ -82,7 +104,15 @@ int main(void)
             }
             else if(rtc_mode == I2C_READ)
             {
+                // Load register ptr and wait to finish write
                 UCB0TXBUF = RTC_SEC_REG;
+                while(!(UCB0IFG & UCSTPIFG)) {}
+                UCB0IFG &= ~UCSTPIFG;
+
+                // Start read
+                set_eUSCI_B0_count(RTC_NUM_TIME_REGS);
+                UCB0CTLW0 &= ~UCTR;
+                UCB0CTLW0 |= UCTXSTT;
             } 
         }
 
@@ -93,10 +123,14 @@ int main(void)
 
 //==============================================================
 
-// Every second, write to RTC
+// Every second, read from RTC
 #pragma vector = TIMER1_B0_VECTOR
 __interrupt void ISR_TB1_CCR0(void) {
-    write_to_rtc = true;
+    //write_to_rtc = true;
+    //rtc_mode = I2C_WRITE;
+    read_from_rtc = true;
+    rtc_mode = I2C_READ;
+    
     TB1CCTL0 &= ~CCIFG;
 }
 

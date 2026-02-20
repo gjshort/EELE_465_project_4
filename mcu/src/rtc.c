@@ -34,3 +34,33 @@ void rtc_write_time_reg(MCP7940N_time *rtc_time, uint8_t *rtc_reg_ptr)
         break;
     }
 }
+
+void rtc_read_time_reg(MCP7940N_time *rtc_time, uint8_t *rtc_reg_ptr)
+{
+    switch(*rtc_reg_ptr)
+    {
+    case RTC_SEC_REG:
+        rtc_time->seconds = UCB0RXBUF;
+        break;
+    case RTC_MIN_REG:
+        rtc_time->minutes = UCB0RXBUF;
+        break;
+    case RTC_HR_REG:
+        rtc_time->hours = UCB0RXBUF;
+        break; 
+    case RTC_WKDAY_REG:
+        rtc_time->weekday = UCB0RXBUF;
+        break;
+    case RTC_DATE_REG:
+        rtc_time->date = UCB0RXBUF;
+        break;
+    case RTC_MTH_REG:
+        rtc_time->month = UCB0RXBUF;
+        break;
+    case RTC_YR_REG:
+        rtc_time->year = UCB0RXBUF;
+        break;
+    default:
+        break;
+    }
+}
