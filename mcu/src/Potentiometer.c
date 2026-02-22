@@ -33,3 +33,13 @@ void init_ADCpot() {
 
 }
 
+// Timer setup for PWM
+void init_PWMtimerB0() {
+
+    TB0CTL |= TBCLR;
+    TB0CTL |= TBSSEL__ACLK;    // Clear TimerB0, select ACLK, and use the UP counter
+    TB0CTL |= MC__UP;
+
+    TB0CCR0 = 32768;
+
+}
