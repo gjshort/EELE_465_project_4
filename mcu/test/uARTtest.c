@@ -11,6 +11,8 @@ int main(void)
 	
 // Setup eUSCI_A1
     init_eUSCI_A1_uart();
+    UCA1IFG &= ~UCRXIFG;
+    UCA1IE |= UCRXIE;
 
     // Setup 1 second interrupt timer
     TB0CTL |= TBCLR;
@@ -39,31 +41,37 @@ int main(void)
  *       IRQ
 ***************************/
 
-// TimerB0 CCR0 will toggle the LED on
+// 1 Second timer ISR
 #pragma vector = TIMER0_B0_VECTOR
 __interrupt void ISR_TB0_CCR0(void)
 {
+    /*
     UCA1IFG &= ~UCTXCPTIFG;
     UCA1IE |= UCTXCPTIE;
     UCA1TXBUF = letter;
-    
+    */
     TB0CCTL0 &= ~CCIFG;     // Clear CCR0 Flag
 }
 
-
+// UART IRQ Handler
 #pragma vector = EUSCI_A1_VECTOR
 __interrupt void EUSCI_A1_UART_ISR(void) {
 
     switch(UCA1IV)
     {
     case TXCPTIFG:  // Done transmitting byte
-    
-        UCA1IE &= ~UCTXCPTIFG;  // Disable Interrupt
         UCA1IFG &= ~UCTXCPTIFG; // Clear IRQ flag
+
+        UCA1IE &= ~UCTXCPTIE;  // Disable Interrupt
         break;
     case RXIFG:     // Receieved byte
-
         UCA1IFG &= ~UCRXIFG;    // Clear IRQ flag
+        if(UCA1RXBUF == 't')
+        {
+            UCA1IFG &= ~UCTXCPTIFG;
+            UCA1IE |= UCTXCPTIE;
+            UCA1TXBUF = letter;
+        }
         break;
     default:
         break;
