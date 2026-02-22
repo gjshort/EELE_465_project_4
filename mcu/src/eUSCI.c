@@ -1,6 +1,6 @@
 /************************************
-* Author: Gabe Story
-* Date: Friday, 02.13.2026
+* Author: Gabe Story, Griffin Short
+* Date: Saturday, 02.21.2026
 * Class:   EELE 465
 * Purpose: c file to take control of uART policy
 *******************************************************************/
@@ -36,12 +36,19 @@ MCP7940N_time m = {
 };
 */
 
-void init_eUSCI_A1() {                     // Setup eUSCI_A1, baud rate 112500
+void init_eUSCI_A1_uart() {
 
 	UCA1CTLW0 |= UCSWRST;
-	UCA1CTLW0 |= UCSSEL__SMCLK;
+	UCA1CTLW0 |= UCSSEL__SMCLK;         // 1 MHz reference clock
+    // 115200 baud
 	UCA1BRW = 8;
 	UCA1MCTLW |= 0xD600;
+
+    P4SEL1 &= ~BIT2;                    // Port 4.2 for uART Rx
+    P4SEL0 |= BIT2;
+
+	P4SEL1 &= ~BIT3;                    // Port 4.3 for uART Tx
+	P4SEL0 |= BIT3;
 
 	UCA1CTLW0 &= ~UCSWRST;
 
@@ -98,23 +105,6 @@ void set_eUSCI_B0_count(uint8_t tbcnt)
     UCB0CTLW0 &= ~UCSWRST;
     UCB0IE |= UCTXIE0;                  //Enable wait for Tx msg IRQ
     UCB0IE |= UCRXIE0;   
-}
-
-void init_eUSCI_GPIO() {
-
-    P1SEL1 &= ~BIT3;                    // P1.3 for SCL
-    P1SEL0 |= BIT3;
-
-    P1SEL1 &= ~BIT2;                    // P1.2 for SDA
-    P1SEL0 |= BIT2;
-
-
-    P4SEL1 &= ~BIT2;                    // Port 4.2 for uART Rx
-    P4SEL0 |= BIT2;
-
-	P4SEL1 &= ~BIT3;                    // Port 4.3 for uART Tx
-	P4SEL0 |= BIT3;
-
 }
 
 void init_timerB1() {
