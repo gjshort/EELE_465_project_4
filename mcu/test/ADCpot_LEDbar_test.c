@@ -4,7 +4,7 @@
 * Class:    EELE 465
 * Purpose:  Basic code to test ADC on P1.1 | A1 | pin 6
             If pin 6 receives certain voltage values the 
-            period for toggling the LED changes
+            period for toggling the LED bar changes
 *************************************************************************************/
 
 #include <msp430fr2153.h>
@@ -41,7 +41,7 @@ int main(void)
         while((ADCIFG & ADCIFG0) == 0) {}
         a.ADCpot_value = ADCMEM0;
 
-        /* This switch case satement reads voltage on pin 37
+        /* This switch case satement reads voltage on pin 6
            and then changes the compare value, 
            chagning the period of the LED toggling */
         switch(a.ADCpot_value) {
@@ -100,7 +100,6 @@ int main(void)
             break;
         }
 
-
     }
     return 0;
 }
@@ -109,7 +108,7 @@ int main(void)
 #pragma vector = TIMER0_B0_VECTOR
 __interrupt void ISR_TB0_CCR0(void){
 
-    P3OUT ^= BIT2;
+    
     TB0CCTL0 &= ~CCIFG;             // clear CCR0 Flag
 
 }

@@ -113,7 +113,7 @@
                         </tool>
                     </fileInfo>
                     <sourceEntries>
-                        <entry excluding="test/ADCpot_test.c|src/main.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="test/ADCpot_LEDbar_test.c|test/ADCpot_test.c|src/main.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                     </sourceEntries>
                 </configuration>
             </storageModule>
