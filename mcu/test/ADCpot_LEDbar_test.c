@@ -4,15 +4,27 @@
 * Class:    EELE 465
 * Purpose:  Basic code to test ADC on P1.1 | A1 | pin 6
             If pin 6 receives certain voltage values the 
-            period for toggling the LED bar changes
+            period for LED bar patterns changes
 *************************************************************************************/
 
 #include <msp430fr2153.h>
 #include <stdbool.h>
 #include <stdint.h>
+
 #include "Potentiometer.h"
 
-ADCpot a;
+#include "led_bar.h"
+#include "gpio.h"
+#include "utils.h"
+#include "led_pattern.h"
+
+#define PAT_MODE 0
+#define REG_MODE 1
+
+volatile bool change_led_bar_seg = false;
+volatile bool update_led_bar_pat_state = false;
+
+LED_TIME time = {0x19, 0x21, 0x14, 0x30, 0x06, 0x26, 0x00};
 
 int main(void)
 {
@@ -28,87 +40,165 @@ int main(void)
 
     // Init ADC for A1 | P1.1 | pin 6
     init_ADCpot();
-    init_PWMtimerB0();
+
+    // Init LED bar
+    init_gpio();
+    init_led_bar();
+    init_led_pattern_timer();
 
     // Enable interrupts
-    TB0CCTL0 &= ~CCIFG;                     // clear CCR0 Flag
-    TB0CCTL0 |= CCIE;                       // enable CCR0 IRQ
     __enable_interrupt();
+
+    // ----- Program Variables -----
+    volatile LED_BAR led_bar = {.red = true, .green = false, 
+                                .seg_data = {0}, 
+                                .seg_ptr = 0};
+
+    // Default LED pattern state
+    LED_PATTERN led_bar_pattern = { .pattern_num = 0,
+                                    .pattern_dir = 0,
+                                    .pattern = 0x0AAA };
+
+    uint8_t led_bar_mode = PAT_MODE;
+
+    bool is_pattern_change_button_low = true;
+    bool is_mode_change_button_low = true;
+    bool is_color_change_button_low = true;
 
     while(1) {
 
-        ADCCTL0 |= ADCENC | ADCSC;          // enable & start conversion
-        while((ADCIFG & ADCIFG0) == 0) {}
-        a.ADCpot_value = ADCMEM0;
+        // Sample potentiometer
+        ADCpot_period();
 
-        /* This switch case satement reads voltage on pin 6
-           and then changes the compare value, 
-           chagning the period of the LED toggling */
-        switch(a.ADCpot_value) {
-            case 0:     TB0CCR0 = 32768;    // period of 1.0s
-            break;
+        // Change LED bar Mode
+        if((P3IN & BIT5) != 0 && is_mode_change_button_low == true)
+        {
+            if(led_bar_mode == PAT_MODE)
+            {
+                led_bar_mode = REG_MODE;
+                P3OUT |= BIT3;  // Set status LED
+                time.reg_num = 0;
+                update_led_bar_pat_state = false;       // Ensure anodes don't get overwritten
+                TB0CCTL0 &= ~CCIE;                      // Disable pattern state timer IRQ      
+                led_time_to_anodes(&led_bar, &time);    // Put reg. 0 on LED bar 
+            }
+            else if(led_bar_mode == REG_MODE)
+            {
+                led_bar_mode = PAT_MODE;
+                P3OUT &= ~BIT3;  // Clear status LED
+                // Return to pattern 0
+                led_bar_pattern.pattern_num = 5;
+                led_pat_change_pattern(&led_bar_pattern);
+                TB0CCTL0 |= CCIE;                   // Restart pattern state timer IRQ
+            }
+            int i;
+            for (i = 5000; i > 0; i--) {}
+            is_mode_change_button_low = false;
+        }
+        else if((P3IN & BIT5) == 0 && is_mode_change_button_low == false)
+        {
+            is_mode_change_button_low = true;
+            int i;
+            for (i = 5000; i > 0; i--) {}
+        }
 
-            case 256:   TB0CCR0 = 30933;    // period of 0.94s
-            break;
+        // Change Pattern or Register number displayed on LED bar
+        if((P3IN & BIT6) != 0 && is_pattern_change_button_low == true)
+        {
+            if(led_bar_mode == PAT_MODE)
+            {
+                led_pat_change_pattern(&led_bar_pattern);
+                led_bar_pat_to_anodes(&led_bar_pattern, &led_bar);
+            }
+            else if(led_bar_mode == REG_MODE)
+            {
+                led_time_change_register(&time);
+                led_time_to_anodes(&led_bar, &time);
+            }
+            int i;
+            for (i = 5000; i > 0; i--) {}
+            is_pattern_change_button_low = false;
+        }
+        else if((P3IN & BIT6) == 0 && is_pattern_change_button_low == false)
+        {
+            is_pattern_change_button_low = true;
+            int i;
+            for (i = 5000; i > 0; i--) {}
+        }
 
-            case 512:   TB0CCR0 = 29163;    // period of 0.89s
-            break;
+        // Reset LED bar system to display Pattern 0
+        if((P1IN & BIT4) != 0)
+        {
+            led_bar_mode = PAT_MODE;
+            P3OUT &= ~BIT3;  // Clear status LED
+            // Go to pattern 0
+            led_bar_pattern.pattern_num = 5;
+            led_pat_change_pattern(&led_bar_pattern);
+            TB0CCTL0 |= CCIE;     // Restart pattern state timer IRQ
+        }
 
-            case 768:   TB0CCR0 = 27197;    // period of 0.83s
-            break;
+        // Change LED bar color
+        if((P3IN & BIT7) != 0 && is_color_change_button_low == true)
+        {
+            led_bar_change_color(&led_bar);
+            int i;
+            for (i = 5000; i > 0; i--) {}
+            is_color_change_button_low = false;
+        }
+        else if((P3IN & BIT7) == 0 && is_color_change_button_low == false)
+        {
+            is_color_change_button_low = true;
+            int i;
+            for (i = 5000; i > 0; i--) {}
+        }
 
-            case 1024:  TB0CCR0 = 25559;    // period of 0.78s
-            break;
+        // Activate the next LED bar segment
+        if(change_led_bar_seg == true)
+        {
+            led_bar_clear_anodes();
+            led_bar_set_cathode(&led_bar);
+            led_bar_write_anodes(&led_bar);
+            // Activate next segment on the LED bar
+            if(led_bar.seg_ptr <= 1) 
+            {
+                led_bar.seg_ptr++;
+            }
+            else 
+            {
+                led_bar.seg_ptr = 0;
+            }
+            change_led_bar_seg = false;
+        }
 
-            case 1280:  TB0CCR0 = 23593;    // period of 0.72s
-            break;
-
-            case 1536:  TB0CCR0 = 21627;    // period of 0.66s
-            break;
-            
-            case 1792:  TB0CCR0 = 19988;    // period of 0.61s
-            break;
-
-            case 2048:  TB0CCR0 = 18022;    // period of 0.55s
-            break;
-
-            case 2304:  TB0CCR0 = 16384;    // period of 0.50s
-            break;
-
-            case 2560:  TB0CCR0 = 14418;    // period of 0.44s
-            break;
-
-            case 2816:  TB0CCR0 = 12452;    // period of 0.38s
-            break;
-
-            case 3072:  TB0CCR0 = 10813;    // period of 0.33s
-            break;
-
-            case 3328:  TB0CCR0 = 8847;     // period of 0.27s
-            break;
-
-            case 3584:  TB0CCR0 = 7209;     // period of 0.22s
-            break;
-
-            case 3840:  TB0CCR0 = 5243;     // period of 0.16s
-            break;
-
-            case 4096:  TB0CCR0 = 3277;     // period of 0.10s
-            break;
-
-            default:
-            break;
+        // Change pattern state and update LED bar segment data
+        if(update_led_bar_pat_state == true)
+        {
+            led_pat_change_pattern_state(&led_bar_pattern);
+            led_bar_pat_to_anodes(&led_bar_pattern, &led_bar);
+            update_led_bar_pat_state = false;
         }
 
     }
     return 0;
 }
 
-// PWM interrupt
+// Change LED pattern state - TB0
 #pragma vector = TIMER0_B0_VECTOR
-__interrupt void ISR_TB0_CCR0(void){
+__interrupt void ISR_TB0_CCR0() {
+    update_led_bar_pat_state = true;
+    TB0CCTL0 &= ~CCIFG;     //Clear IRQ flag
+}
 
-    
-    TB0CCTL0 &= ~CCIFG;             // clear CCR0 Flag
+// Toggle heartbeat LED - TB1
+#pragma vector = TIMER1_B0_VECTOR
+__interrupt void ISR_TB1_CCR0() {
+    P3OUT ^= BIT2;          // Toggle P3.2 LED
+    TB1CCTL0 &= ~CCIFG;     //Clear IRQ flag
+}
 
+// Change segment on LED Bar - TB2
+#pragma vector = TIMER2_B0_VECTOR
+__interrupt void ISR_TB2_CCR0() {
+    change_led_bar_seg = true;
+    TB2CCTL0 &= ~CCIFG;     //Clear IRQ flag
 }
