@@ -11,18 +11,18 @@ void timeLED(uint8_t z) {
   if (z == 0) {                 // Low bit
 
     P3OUT |= BIT7;              // P3.7 HIGH
-    __delay_cycles(3);          // ~0.25us at 8MHz (adjust for your clock)
+    __delay_cycles(3);          // ~0.4us at 8MHz (adjust for your clock)
 
     P3OUT &= ~BIT7;             // P3.7 LOW
-    __delay_cycles(6);          // ~0.75us at 8MHz
+    __delay_cycles(7);          // ~0.85us at 8MHz
 
   } else {                      // High bit
 
     P3OUT |= BIT7;              // P3.7 HIGH
-    __delay_cycles(6);          // ~0.75us at 8MHz
+    __delay_cycles(6);          // ~0.8us at 8MHz
 
     P3OUT &= ~BIT7;             // P3.7 LOW
-    __delay_cycles(3);          // ~0.25us at 8MHz
+    __delay_cycles(4);          // ~0.45us at 8MHz
 
   }
 }
@@ -34,7 +34,7 @@ void DotimeLED(uint8_t index) {
   uint8_t red   = rgb[index].red;
   uint8_t green = rgb[index].green;
   uint8_t blue  = rgb[index].blue;
-  uint8_t white = rgb[index].white;
+
 
   uint8_t bit;
   for(bit = 8; bit > 0; --bit) {
@@ -45,9 +45,6 @@ void DotimeLED(uint8_t index) {
   }
   for(bit = 8; bit > 0; --bit) {
     timeLED((blue >> (bit - 1)) & 1);
-  }
-  for(bit = 8; bit > 0; --bit) {
-    timeLED((white >> (bit - 1)) & 1);
   }
 
 }
@@ -64,12 +61,11 @@ void seeLED() {
 }
 
 // Helper function to change color
-void setPixelColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
+void setPixelColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
 
     rgb[index].red   = r;
     rgb[index].green = g;
     rgb[index].blue  = b;
-    rgb[index].white = w;
     
 }
 
@@ -84,5 +80,27 @@ void initLED() {
     }
     __delay_cycles(400);
   }
+
+}
+
+// Init DCO to 8MHz
+void init_8MHz() {
+
+  __bis_SR_register(SCG0);                  // disable FLL, select ref clock
+  CSCTL3 = SELREF__REFOCLK;
+
+  // clear CSCTL0 register
+  CSCTL0 = 0;
+  CSCTL1 = DCORSEL_3;
+
+  /* Set FLLN and FLLD for target frequency (8MHz / 32768Hz = 244.14)
+     Formula: FDCO = (FLLN + 1) * (Fref / FLLD)
+     8MHz = (243 + 1) * (32768Hz / 1) */
+  CSCTL2 = FLLD_0 + 243;
+  __delay_cycles(3);
+
+  // Enable FLL
+  __bic_SR_register(SCG0);
+  while(CSCTL7 & (FLLUNLOCK | FLLUNLOCK1));
 
 }
