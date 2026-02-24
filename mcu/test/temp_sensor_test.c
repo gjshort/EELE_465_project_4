@@ -7,6 +7,8 @@ volatile bool start_temp_adc;
 volatile bool is_temp_adc_done;
 volatile uint16_t temp_adc_val;
 
+uint8_t lmt87_temp;
+
 int main(void)
 {
     // Stop the watchdog timer
@@ -60,6 +62,8 @@ int main(void)
     ADCIFG &= ~ADCIFG0;     //Clear IRQ flag
     ADCIE |= ADCIE0;        //Enable conversion completion IRQ
 
+    
+
     // Disable low-power mode
     PM5CTL0 &= ~LOCKLPM5;
     __enable_interrupt();
@@ -76,13 +80,17 @@ int main(void)
 
         if(is_temp_adc_done)
         {
-            if(temp_adc_val > 2000) // ~1.6 V
+            //lmt87_temp = (-0.0597)*temp_adc_val + 195;
+            uint8_t i;
+            // Run through LUT and if ADC val is >= to LUT value, pull its
+            // associated temperature
+            for(i = 0; i < sizeof(lmt87_temp_table[0])/sizeof(uint16_t); i++)
             {
-                P3OUT |= BIT2;
-            }
-            else 
-            {
-                P3OUT &= ~BIT2;
+                if(temp_adc_val >= lmt87_temp_table[1][i])
+                {
+                    lmt87_temp = lmt87_temp_table[0][i];
+                    break;
+                }
             }
             is_temp_adc_done = false;
         }
