@@ -2,12 +2,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "lmt87lpm.h"
+#include "ring_buffer.h"
 
+// IRQ flags
 volatile bool start_temp_adc;
 volatile bool is_temp_adc_done;
-volatile uint16_t temp_adc_val;
 
+// Temperature values
+volatile uint16_t temp_adc_val;
 volatile uint16_t lmt87_temp;
+volatile float lmt87_temp_avg;
 
 int main(void)
 {
@@ -17,6 +21,10 @@ int main(void)
     // Init globals
     start_temp_adc = false;
     is_temp_adc_done = false;
+    lmt87_temp_avg = 0;
+
+    // Locals
+    ring_buffer temp_buf = {{0}, 0};
 
     // Test LED
     P3SEL0 &= ~BIT2;    // Set to Digital IO
@@ -92,6 +100,8 @@ int main(void)
                     break;
                 }
             }
+            ring_buf_push(&temp_buf, lmt87_temp);
+            lmt87_temp_avg = ring_buf_average(&temp_buf, 5);
             is_temp_adc_done = false;
         }
 
