@@ -7,7 +7,7 @@ volatile bool start_temp_adc;
 volatile bool is_temp_adc_done;
 volatile uint16_t temp_adc_val;
 
-uint8_t lmt87_temp;
+volatile uint16_t lmt87_temp;
 
 int main(void)
 {
