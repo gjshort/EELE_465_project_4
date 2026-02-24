@@ -1,0 +1,14 @@
+-- Pseudocode for Temperature Sensor --
+
+* LMT87 output voltage is inversely proportional to temp.
+* Sensor gain is approx. -13.6 mV/*C
+* Using ADC pin A5 (P1.5)
+
+* Every 0.5 seconds: Start ADC conversion
+* In ISR: set ADC done flag
+* In main: 
+	- check flag, pull value in ADCMEM
+	- convert to Celsius
+	- push to ring buffer
+	- calculate average of ring buffer
+	- start UART transmission of new average value
