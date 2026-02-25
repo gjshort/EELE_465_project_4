@@ -133,7 +133,7 @@ class App(tk.Tk):
             temperature = self._temperature_queue.get()
             self._temperature.set(temperature)
 
-        # We have to recurisvely trigger the "after" timer so this function is
+        # We have to recursively trigger the "after" timer so this function is
         # called every _TEMPERATURE_UPDATE_PERIOD_MS instead of only once.
         self.after(self._TEMPERATURE_UPDATE_PERIOD_MS, self._update_temperature)
 
@@ -143,7 +143,7 @@ class App(tk.Tk):
             rtc_date_time = self._mcu_rtc_date_time_queue.get()
             self._rtc_date_time.set(rtc_date_time)
 
-        # We have to recurisvely trigger the "after" timer so this function is
+        # We have to recursively trigger the "after" timer so this function is
         # called every _DATE_TIME_UPDATE_PERIOD_MS instead of only once.
         self.after(self._DATE_TIME_UPDATE_PERIOD_MS, self._update_rtc_date_time)
 
@@ -191,7 +191,7 @@ def mcu_interface_worker(
             which will then set the RTC registers accordingly.
         mcu_rtc_date_time_queue:
             Queue this thread uses to send the current RTC date and time to the GUI.
-        moving_avg_window_size_quque:
+        moving_avg_window_size_queue:
             Queue for setting the moving average window size. The GUI puts values
             in this queue for us to send to the MCU.
         temperature_queue:
@@ -241,7 +241,7 @@ def mcu_interface_worker(
             print(rtc_date_time)
 
         if not moving_avg_window_size_queue.empty():
-            # We've reaceived an updated moving avg window size from the GUI.
+            # We've received an updated moving avg window size from the GUI.
             # Send the updated window size to the MCU.
             moving_avg_window_size = moving_avg_window_size_queue.get()
             print(f"window size = {moving_avg_window_size}")
