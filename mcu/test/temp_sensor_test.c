@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "lmt87lpm.h"
 #include "ring_buffer.h"
+#include "my_float.h"
 
 // IRQ flags
 volatile bool start_temp_adc;
@@ -22,6 +23,7 @@ int main(void)
     start_temp_adc = false;
     is_temp_adc_done = false;
     lmt87_temp_avg = 0;
+    char lmt87_temp_str[16] = {0};
 
     // Locals
     ring_buffer temp_buf = {{0}, 0};
@@ -88,6 +90,7 @@ int main(void)
 
         if(is_temp_adc_done)
         {
+            is_temp_adc_done = false;
             //lmt87_temp = (-0.0597)*temp_adc_val + 195;
             uint8_t i;
             // Run through LUT and if ADC val is >= to LUT value, pull its
@@ -100,9 +103,17 @@ int main(void)
                     break;
                 }
             }
+            
+            // Add new value to ring buf, re-average the buffer with
+            // a specified window and then convert avg. to string
             ring_buf_push(&temp_buf, lmt87_temp);
             lmt87_temp_avg = ring_buf_average(&temp_buf, 5);
-            is_temp_adc_done = false;
+
+            for(i = 0; i < sizeof(lmt87_temp_str); i++) // Clear string buffer
+            {
+                lmt87_temp_str[i] = '\0';
+            }
+            ftoa_2(lmt87_temp_avg, lmt87_temp_str);
         }
 
     }
