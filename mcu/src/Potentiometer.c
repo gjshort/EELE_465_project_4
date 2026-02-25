@@ -2,7 +2,7 @@
 * Author:   Gabe Story
 * Date:     02.22.2026
 * Class:    EELE 465
-* Purpose:  Policy code for samppling ADC to control
+* Purpose:  Policy code for sampling ADC to control
             period of the LED patterns
 ****************************************************/
 
@@ -46,102 +46,47 @@ void init_PWMtimerB0() {
 
 }
 
-void ADCpot_period() {
+// Read potentiometer voltage, change TB0CCR0
+void ADCpot_period() {                      
 
         ADCCTL0 |= ADCENC | ADCSC;          // enable & start conversion
         while((ADCIFG & ADCIFG0) == 0) {}
         a.ADCpot_value = ADCMEM0;
 
-        /* This switch case satement reads voltage on pin 6
+        /* This if/else statement reads voltage on pin 6
            and then changes the compare value, 
-           chagning the period of the LED toggling */
-//        switch(a.ADCpot_value) {
-//            case 0:     TB0CCR0 = 32768;    // period of 1.0s
-//            break;
-//
-//            case 256:   TB0CCR0 = 30933;    // period of 0.94s
-//            break;
-//
-//            case 512:   TB0CCR0 = 29163;    // period of 0.89s
-//            break;
-//
-//            case 768:   TB0CCR0 = 27197;    // period of 0.83s
-//            break;
-//
-//            case 1024:  TB0CCR0 = 25559;    // period of 0.78s
-//           break;
-//
-//            case 1280:  TB0CCR0 = 23593;    // period of 0.72s
-//            break;
-//
-//            case 1536:  TB0CCR0 = 21627;    // period of 0.66s
-//            break;
-//            
-//            case 1792:  TB0CCR0 = 19988;    // period of 0.61s
-//            break;
-//
-//            case 2048:  TB0CCR0 = 18022;    // period of 0.55s
-//            break;
-//
-//            case 2304:  TB0CCR0 = 16384;    // period of 0.50s
-//            break;
-//
-//            case 2560:  TB0CCR0 = 14418;    // period of 0.44s
-//            break;
-//
-//            case 2816:  TB0CCR0 = 12452;    // period of 0.38s
-//            break;
-//
-//            case 3072:  TB0CCR0 = 10813;    // period of 0.33s
-//            break;
-//
-//            case 3328:  TB0CCR0 = 8847;     // period of 0.27s
-//            break;
-//
-//            case 3584:  TB0CCR0 = 7209;     // period of 0.22s
-//            break;
-//
-//            case 3840:  TB0CCR0 = 5243;     // period of 0.16s
-//            break;
-//
-//            case 4096:  TB0CCR0 = 3277;     // period of 0.10s
-//            break;
-//
-//            default:
-//            break;
-//        }
-
-        if(0 <= a.ADCpot_value < 256) {
+           changing the period of the LED toggling */
+        if(a.ADCpot_value <= 256) {
             TB0CCR0 = 32768;
-        } else if(256 <= a.ADCpot_value < 512) {
+        } else if(a.ADCpot_value <= 512) {
             TB0CCR0 = 30933;
-        } else if(512 <= a.ADCpot_value < 768) {
+        } else if(a.ADCpot_value <= 768) {
             TB0CCR0 = 29163;
-        } else if(768 <= a.ADCpot_value < 1024) {
+        } else if(a.ADCpot_value <= 1024) {
             TB0CCR0 = 27197;
-        } else if(1024 <= a.ADCpot_value < 1280) {
+        } else if(a.ADCpot_value <= 1280) {
             TB0CCR0 = 25559;
-        } else if(1280 <= a.ADCpot_value < 1536) {
+        } else if(a.ADCpot_value <= 1536) {
             TB0CCR0 = 23593;
-        } else if(1536 <= a.ADCpot_value < 1792) {
+        } else if(a.ADCpot_value <= 1792) {
             TB0CCR0 = 21627;
-        } else if(1792 <= a.ADCpot_value < 2048) {
+        } else if(a.ADCpot_value <= 2048) {
             TB0CCR0 = 19988;
-        } else if(2048 <= a.ADCpot_value < 2304) {
+        } else if(a.ADCpot_value <= 2304) {
             TB0CCR0 = 18022;
-        } else if(2304 <= a.ADCpot_value < 2560) {
+        } else if(a.ADCpot_value <= 2560) {
             TB0CCR0 = 16384;
-        } else if(2560 <= a.ADCpot_value < 2816) {
+        } else if(a.ADCpot_value <= 2816) {
             TB0CCR0 = 14418;
-        } else if(2816 <= a.ADCpot_value < 3072) {
+        } else if(a.ADCpot_value <= 3072) {
             TB0CCR0 = 12452;
-        } else if(3072 <= a.ADCpot_value < 3328) {
+        } else if(a.ADCpot_value <= 3328) {
             TB0CCR0 = 10813;
-        } else if(3328 <= a.ADCpot_value < 3584) {
+        } else if(a.ADCpot_value <= 3584) {
             TB0CCR0 = 8847;
-        } else if(3584 <= a.ADCpot_value < 3840) {
+        } else if(a.ADCpot_value <= 3840) {
             TB0CCR0 = 7209;
-        } else if(3840 <= a.ADCpot_value < 4096) {
+        } else if(a.ADCpot_value <= 4096) {
             TB0CCR0 = 5243;
         } else if(a.ADCpot_value >= 4096) {
             TB0CCR0 = 3277;
