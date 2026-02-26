@@ -39,46 +39,40 @@ void uart_tx_time_data(MCP7940N_time *rtc_time, uint8_t *time_data_ptr)
     case 7: // Seconds - One
         UCA1TXBUF = (rtc_time->seconds & 0x0F) + '0';
         break;
-    case 8: // Space
+    case 8:    // Space
         UCA1TXBUF = ' ';
         break;
-    case 9: // Weekday
-        UCA1TXBUF = (rtc_time->weekday & 0x07) + '0';           // Strip OSCRUN, PWRFAIL, VBAT bits
-        break;
-    case 10:    // Space
-        UCA1TXBUF = ' ';
-        break;
-    case 11:    // Month - Ten
+    case 9:    // Month - Ten
         UCA1TXBUF = ((rtc_time->month & 0x10) >> 4) + '0';      // Strip LPYR bit
         break;
-    case 12:    // Month - One
+    case 10:    // Month - One
         UCA1TXBUF = (rtc_time->month & 0x0F) + '0';
         break;
-    case 13:    // Slash
+    case 11:    // Slash
         UCA1TXBUF = '/';
         break;  
-    case 14:    // Date - Ten
+    case 12:    // Date - Ten
         UCA1TXBUF = ((rtc_time->date & 0x30) >> 4) + '0';
         break;
-    case 15:    // Date - One
+    case 13:    // Date - One
         UCA1TXBUF = (rtc_time->date & 0x0F) + '0';
         break;
-    case 16:    // Slash
+    case 14:    // Slash
         UCA1TXBUF = '/';
         break; 
-    case 17:    // Year - Ten
+    case 15:    // Year - Ten
         UCA1TXBUF = ((rtc_time->year & 0xF0) >> 4) + '0';
         break;
-    case 18:    // Year - One
+    case 16:    // Year - One
         UCA1TXBUF = (rtc_time->year & 0x0F) + '0';
         break;
-    case 19:    // Carriage Return
+    case 17:    // Carriage Return
         UCA1TXBUF = '\r';
         break;
-    case 20:    // New line
+    case 18:    // New line
         UCA1TXBUF = '\n';
         break; 
-    case 21:    // Null
+    case 19:    // Null
         UCA1TXBUF = '\0';
         break;  
     default:

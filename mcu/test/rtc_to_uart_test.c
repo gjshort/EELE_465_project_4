@@ -151,7 +151,7 @@ int main(void)
         if(uart_txcpt_irq == true)
         {
             uart_txcpt_irq = false;
-            if(uart_time_data_ptr >= 22)
+            if(uart_time_data_ptr >= 20)
             {   // Reset ptr, disable interrupt
                 uart_time_data_ptr = 0;
                 UCA1IE &= ~UCTXCPTIE;
