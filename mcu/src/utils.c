@@ -9,12 +9,12 @@
  * Pack the given buffer with the RTC time in ASCII
  * @param rtc_time - pointer to a defined struct for the RTC
  * @param buf - buffer the time message will be written to.
- *              MUST BE OF LENGTH 20. USER BEWARE.
+ *              MUST BE OF LENGTH 20 OR MORE. USER BEWARE.
  *
  * Format:  HH:MM:SS MM/DD/YY\r\n\0
  *
  */
- void pack_time_buffer(MCP7940N_time *rtc_time, char buf[20])
+ void pack_time_buffer(MCP7940N_time *rtc_time, char *buf)
  {
     buf[0]  = ((rtc_time->hours & 0x30) >> 4) + '0';      // strip 12/24hr mode bit
     buf[1]  = (rtc_time->hours & 0x0F) + '0';
@@ -44,8 +44,10 @@
  * @param time_buf - buffer holding the formatted RTC time
  * @param time_data_idx - index of the next character to be written
  *
+ * NO BOUNDS CHECKING. USER BEWARE
+ *
  */
-void uart_tx_time_data(char time_buf[20], uint8_t time_data_idx)
+void uart_tx_time_data(char *time_buf, uint8_t time_data_idx)
 {
     UCA1TXBUF = time_buf[time_data_idx];
 }
