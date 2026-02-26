@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define RING_BUF_SIZE 16    // Max = 254 for downward traversal overflow checking
+#define RING_BUF_SIZE 16    // Max = 254 for downward wrap-around 
+                            // overflow checking
 
 typedef struct ring_buffer
 {
