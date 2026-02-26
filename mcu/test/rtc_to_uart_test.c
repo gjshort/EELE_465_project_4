@@ -40,7 +40,8 @@ int main(void)
 
     // Init UART peripheral
     init_eUSCI_A1_uart();
-    uint8_t uart_time_data_ptr = 0x00;
+    uint8_t uart_time_data_idx = 0x00;
+    char uart_time_data_buf[20] = {0};
 
     // ------------- TB1 ---------------
     // 1 sec.
@@ -53,9 +54,6 @@ int main(void)
     TB1EX0 |= TBIDEX__5;        // Divide by 5
 
     TB1CCR0 = 50000;            // 1 sec. - Heartbeat LED duty cycle
-
-    //TB1CCTL0 &= ~CCIFG;       // Enable Interrupt
-    //TB1CCTL0 |= CCIE;
 
     // Final Init
     PM5CTL0 &= ~LOCKLPM5;
@@ -71,10 +69,14 @@ int main(void)
             uart_start_time_tx = false;   
             TB1CCTL0 &= ~CCIE;          // Don't let TB1 trigger during Tx
 
-            UCA1IFG &= ~UCTXCPTIFG;
+            // Enable UART IRQ
+            UCA1IFG &= ~UCTXCPTIFG;     
             UCA1IE |= UCTXCPTIE;
-            uart_tx_time_data(&rtc_time, &uart_time_data_ptr);
-            uart_time_data_ptr++;
+
+            // Pack time buffer and start transmit
+            pack_time_buffer(&rtc_time, uart_time_data_buf);
+            uart_tx_time_data(uart_time_data_buf, uart_time_data_idx);
+            uart_time_data_idx++;
         }
         
 
@@ -151,17 +153,17 @@ int main(void)
         if(uart_txcpt_irq == true)
         {
             uart_txcpt_irq = false;
-            if(uart_time_data_ptr >= 20)
-            {   // Reset ptr, disable interrupt
-                uart_time_data_ptr = 0;
+            if(uart_time_data_idx >= sizeof(uart_time_data_buf))
+            {   // Reset index, disable UART IRQ, enable TB1 IRQ
+                uart_time_data_idx = 0;
                 UCA1IE &= ~UCTXCPTIE;
                 TB1CCTL0 &= ~CCIFG;     
                 TB1CCTL0 |= CCIE;
             }
             else 
-            {   // Load next character. After, increment ptr
-                uart_tx_time_data(&rtc_time, &uart_time_data_ptr);
-                uart_time_data_ptr++;
+            {   // Load next character. After, increment index
+                uart_tx_time_data(uart_time_data_buf, uart_time_data_idx);
+                uart_time_data_idx++;
             }
         }
 

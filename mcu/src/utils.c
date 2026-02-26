@@ -6,78 +6,48 @@
 #include "eUSCI.h"
 
 /**
- * Update the UART Tx Buffer with the necessary RTC register data.
- * Make sure to strip out the unnecessary register bits and insert
- * colons/commas where necessary.
+ * Pack the given buffer with the RTC time in ASCII
+ * @param rtc_time - pointer to a defined struct for the RTC
+ * @param buf - buffer the time message will be written to.
+ *              MUST BE OF LENGTH 20. USER BEWARE.
+ *
+ * Format:  HH:MM:SS MM/DD/YY\r\n\0
  *
  */
-void uart_tx_time_data(MCP7940N_time *rtc_time, uint8_t *time_data_ptr)
+ void pack_time_buffer(MCP7940N_time *rtc_time, char buf[20])
+ {
+    buf[0]  = ((rtc_time->hours & 0x30) >> 4) + '0';      // strip 12/24hr mode bit
+    buf[1]  = (rtc_time->hours & 0x0F) + '0';
+    buf[2]  = ':';
+    buf[3]  = ((rtc_time->minutes & 0xF0) >> 4) + '0';
+    buf[4]  = (rtc_time->minutes & 0x0F) + '0';
+    buf[5]  = ':';
+    buf[6]  = ((rtc_time->seconds & 0x70) >> 4) + '0';    // Strip ST bit
+    buf[7]  = (rtc_time->seconds & 0x0F) + '0';
+    buf[8]  = ' ';
+    buf[9]  = ((rtc_time->month & 0x10) >> 4) + '0';      // Strip LPYR bit
+    buf[10] = (rtc_time->month & 0x0F) + '0';
+    buf[11] = '/';
+    buf[12] = ((rtc_time->date & 0x30) >> 4) + '0';
+    buf[13] = (rtc_time->date & 0x0F) + '0';
+    buf[14] = '/';
+    buf[15] = ((rtc_time->year & 0xF0) >> 4) + '0';
+    buf[16] = (rtc_time->year & 0x0F) + '0';
+    buf[17] = '\r';
+    buf[18] = '\n';
+    buf[19] = '\0';
+ }
+
+/**
+ * Updates the A1 UART Tx Buffer with the next character 
+ * in the buffer holding the formatted RTC time.
+ * @param time_buf - buffer holding the formatted RTC time
+ * @param time_data_idx - index of the next character to be written
+ *
+ */
+void uart_tx_time_data(char time_buf[20], uint8_t time_data_idx)
 {
-    switch(*time_data_ptr)
-    {
-    case 0: // Hours - Ten
-        UCA1TXBUF = ((rtc_time->hours & 0x30) >> 4) + '0';      // strip 12/24hr mode bit
-        break;
-    case 1: // Hours - One
-        UCA1TXBUF = (rtc_time->hours & 0x0F) + '0';
-        break;
-    case 2: // Colon
-        UCA1TXBUF = ':';
-        break;
-    case 3: // Minutes - Ten
-        UCA1TXBUF = ((rtc_time->minutes & 0xF0) >> 4) + '0';
-        break; 
-    case 4: // Minutes - One
-        UCA1TXBUF = (rtc_time->minutes & 0x0F) + '0';
-        break;  
-    case 5: // Colon
-        UCA1TXBUF = ':';
-        break;
-    case 6: // Seconds - Ten
-        UCA1TXBUF = ((rtc_time->seconds & 0x70) >> 4) + '0';    // Strip ST bit
-        break;
-    case 7: // Seconds - One
-        UCA1TXBUF = (rtc_time->seconds & 0x0F) + '0';
-        break;
-    case 8:    // Space
-        UCA1TXBUF = ' ';
-        break;
-    case 9:    // Month - Ten
-        UCA1TXBUF = ((rtc_time->month & 0x10) >> 4) + '0';      // Strip LPYR bit
-        break;
-    case 10:    // Month - One
-        UCA1TXBUF = (rtc_time->month & 0x0F) + '0';
-        break;
-    case 11:    // Slash
-        UCA1TXBUF = '/';
-        break;  
-    case 12:    // Date - Ten
-        UCA1TXBUF = ((rtc_time->date & 0x30) >> 4) + '0';
-        break;
-    case 13:    // Date - One
-        UCA1TXBUF = (rtc_time->date & 0x0F) + '0';
-        break;
-    case 14:    // Slash
-        UCA1TXBUF = '/';
-        break; 
-    case 15:    // Year - Ten
-        UCA1TXBUF = ((rtc_time->year & 0xF0) >> 4) + '0';
-        break;
-    case 16:    // Year - One
-        UCA1TXBUF = (rtc_time->year & 0x0F) + '0';
-        break;
-    case 17:    // Carriage Return
-        UCA1TXBUF = '\r';
-        break;
-    case 18:    // New line
-        UCA1TXBUF = '\n';
-        break; 
-    case 19:    // Null
-        UCA1TXBUF = '\0';
-        break;  
-    default:
-        break;
-    }
+    UCA1TXBUF = time_buf[time_data_idx];
 }
 
 /*

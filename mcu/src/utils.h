@@ -6,8 +6,8 @@
 #include "eUSCI.h"
 #include "rtc.h"
 
-void uart_tx_time_data(MCP7940N_time*, uint8_t*);
-
+void pack_time_buffer(MCP7940N_time*, char*);
+void uart_tx_time_data(char*, uint8_t);
 
 /*
 #include "led_bar.h"
