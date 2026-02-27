@@ -10,6 +10,8 @@
 **********************************************************************/
 
 #include    <msp430fr2153.h>
+#include    <math.h>
+#include    <stdint.h>
 #include    "LEDstick.h"
 
 // Struct for LED color
@@ -23,6 +25,8 @@ typedef struct {
 
 static GRB ledStick[PixNumber] = { {0, 0, 0} };
 int color_state = 0;
+int color_state2 = 0;
+
 // Initialize main clk to 16MHz
 void init_CLK() {
 
@@ -136,13 +140,23 @@ void init_LEDstick_color_button() {
 
 }
 
+// Button connected to P3.5 is pressed we change the color of the first LED
 void stickColor_change() {
 
-    color_state++;
-    if(color_state > 4) {
-        color_state = 0;
-    }
+    __delay_cycles(4000000);                    // is button still pressed?
 
+    // IF so, cahnge the color of the WHOLE stick
+    if((P3IN & BIT5) != 0) {
+        colorStateWhole();
+    } else if((P3IN & BIT5) == 0){
+        colorStateSingle();                     // IF not, just chnage the color of the first pixel
+    }
+    
+}
+
+void colorStateSingle() {
+
+    color_state++;
     switch(color_state) {
         case 1:     setColor(0, 0, 55, 0);      // red
         break;
@@ -154,12 +168,52 @@ void stickColor_change() {
         break;
 
         case 4:     setColor(0, 55, 55, 55);    // white
+                    color_state = 0;
         break;
 
         default:    break;
     }
+    __delay_cycles(4000000);     // 0.25s delay
+    sendStick();
 
 }
+
+void colorStateWhole() {
+
+        __delay_cycles(4000000);
+        color_state2++;
+        switch(color_state2) {
+            case 1:     StickFiller( 0, 55, 0);         // red
+            break;
+
+            case 2:     StickFiller(55, 0, 0);          // green
+            break;
+
+            case 3:     StickFiller(0, 0, 55);          // blue
+            break;
+
+            case 4:     StickFiller(55, 55, 55);        // white
+                        color_state2 = 0;
+            break;
+
+            default:    break;
+        }
+
+    __delay_cycles(4000000);     // 0.25s delay
+    sendStick();
+
+}
+
+void gradient(u_char g, u_char r, u_char b) {
+
+    for(g = 255; g > 0; g--) {
+        setColor(0, g, 0, 0);
+        sendStick();
+        __delay_cycles(400000);
+
+    }
+
+    }
 
 /* References:   
 I want to cite these sources for inspiration & useful how-to

@@ -32,11 +32,9 @@ int main(void)
         if((P3IN & BIT5) != 0) {
             __delay_cycles(100);
             stickColor_change();
-            __delay_cycles(8000000);
+            __delay_cycles(800000);
         }
-
-        sendStick();
-        //__delay_cycles(8000000);           // 1/2 sec delay          
+          
     }
 
 }
