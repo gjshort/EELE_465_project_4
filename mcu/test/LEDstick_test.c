@@ -1,55 +1,36 @@
-/************************************
+/***********************************
 * Author:   Gabe Story
-* Date:     02.18.2026
-* Class:    EELE 465
-* Purpose:  Mechanism development for the LEDstick
+* Date:     02.26.2026
+* Class:    EELE 456
+* Purpose:  This c file will hold all the policy
 
-   Rec 8:  System can individually turn on each LED
+            We will be able to set the color for individual
+            pixels, and change brightness
+**********************************************************************/
 
-   Rec 9:  Color of LEDs can be changed by pressing a button
-        Spec 9.1:   St least need to be red, green, blue, & white
-
-   Rec 10: Position of slide potentiometer must be mapped
-            to lED strip
-
-****************************************************************************/
-
-#include <msp430fr2153.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include "LEDstick.h"
+#include    <msp430fr2153.h>
+#include    "LEDstick.h"
 
 int main(void)
 {
     // Stop the watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
 
+    // Setup CLK, SPI
+    init_CLK();
+    init_SPI();
+
     // Disable low-power mode
     PM5CTL0 &= ~LOCKLPM5;
 
-    // Set P3.1 for LEDstick I/O
-    P3DIR |= BIT1;
-    P3SEL0 &= ~BIT1;
-    P3SEL1 &= ~BIT1;
-
-    // Change MCLK to 8MHz
-    init_8MHz();
-
-    // Init LED strip
-    initLED();
+    // clear LED stick
+    clearStick();
 
     while(1) {
 
-        setPixelColor(0, 55, 0, 0);
-        setPixelColor(1, 55, 55, 0);
-        setPixelColor(2, 0, 55, 0);
-        setPixelColor(3, 0, 55, 55);
-        setPixelColor(4, 0, 0, 55);
-
-        seeLED();
-
+        setColor(4, 10, 10, 10);
+        sendStick();
+        __delay_cycles(8000000);           // 1 sec delay          
     }
-    
-    return 0;
 
 }

@@ -1,20 +1,27 @@
-/******************************
-* Author:   Gabe Story
-* Date:     02.19.2026
-* Class:    EELE 465
-* Purpose:  Header file for LEDstrip mechanism & policy
-*************************************************************/
+/***********************************
+* Author:       Gabe Story
+* Date:         02.26.2026
+* Class:        EELE 456
+* Purpose:      This h file will hold all the variables needed
+                to operate the WS2812B LED stick
+**********************************************************************/
 
-#pragma once            // include once, dont redefine else where
+#pragma once
 
-#define numPixels   10  // LED stick used for this code has 10 pixels
+// Number of LEDs in strip
+#define PixNumber   10                  
 
-// Struct for colors
-typedef struct RGB {
+// What the neopixels receive as a 1 or 0
+#define highTide    0b11000000                  // (1)
+#define lowTide     0b10000000                  // (0)
 
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    uint8_t white;
+// Useful typedefs
+typedef unsigned char u_char;
+typedef unsigned int  u_int;
 
-}   RGB;
+/* References:   
+Citing for inspiration & useful how-to
+that helped me get started.
+               
+                - Mjmeli: MSP430 | NeoPixel library https://github.com/mjmeli/MSP430-NeoPixel-WS2812-Library/tree/master
+*/

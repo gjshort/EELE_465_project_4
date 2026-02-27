@@ -1,106 +1,127 @@
-#include <msp430fr2153.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include "LEDstick.h"
+/***********************************
+* Author:   Gabe Story
+* Date:     02.26.2026
+* Class:    EELE 456
+* Purpose:  This c file will hold all the functions needed
+            to operate the WS2812B LED stick
 
-RGB rgb[numPixels];
+            We will be able to set the color for individual
+            pixels, and change brightness
+**********************************************************************/
 
-// Timing function for individual bit reading for each LED
-void timeLED(uint8_t z) {
+#include    <msp430fr2153.h>
+#include    "LEDstick.h"
 
-  if (z == 0) {                 // Low bit
+// Struct for LED color
+typedef struct {
 
-    P3OUT |= BIT7;              // P3.7 HIGH
-    __delay_cycles(3);          // ~0.4us at 8MHz (adjust for your clock)
+    u_char  green;
+    u_char  red;
+    u_char  blue;
 
-    P3OUT &= ~BIT7;             // P3.7 LOW
-    __delay_cycles(7);          // ~0.85us at 8MHz
+} GRB;
 
-  } else {                      // High bit
+static GRB ledStick[PixNumber] = { {0, 0, 0} };
 
-    P3OUT |= BIT7;              // P3.7 HIGH
-    __delay_cycles(6);          // ~0.8us at 8MHz
+// Initialize main clk to 16MHz
+void init_CLK() {
 
-    P3OUT &= ~BIT7;             // P3.7 LOW
-    __delay_cycles(4);          // ~0.45us at 8MHz
+    FRCTL0 = FRCTLPW | NWAITS_1;
+    __bis_SR_register(SCG0);
 
-  }
-}
+    CSCTL3 = SELREF__REFOCLK;
+    CSCTL1 = DCORSEL_5;
+    CSCTL2 = FLLD_0 + 487;
+    __delay_cycles(3);
 
-
-// Convert RGB values to binary, time the LED
-void DotimeLED(uint8_t index) {
-
-  uint8_t red   = rgb[index].red;
-  uint8_t green = rgb[index].green;
-  uint8_t blue  = rgb[index].blue;
-
-
-  uint8_t bit;
-  for(bit = 8; bit > 0; --bit) {
-    timeLED((green >> (bit - 1)) & 1);
-  }
-  for(bit = 8; bit > 0; --bit) {
-    timeLED((red >> (bit - 1)) & 1);
-  }
-  for(bit = 8; bit > 0; --bit) {
-    timeLED((blue >> (bit - 1)) & 1);
-  }
+    __bic_SR_register(SCG0);
+    CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
 
 }
 
-// Send color to every LED
-void seeLED() {
+// Initialize SPI for blasting that LED Stick
+void init_SPI() {
 
-  uint8_t led;
-  for(led = 0; led < 1; led++) {
-    DotimeLED(led);
-    __delay_cycles(400);
-  }
+    // Set pin for SPI SIMO
+    P1SEL0 |= BIT2;
+    P1DIR |= BIT2;
+
+    UCB0CTLW0 |= UCSWRST;           // enable software reset
+
+    UCB0CTLW0 &= ~UCCKPL;
+    UCB0CTLW0 &= ~UCCKPH;
+    UCB0CTLW0 |= UCMSB;             // configure to 3-pin SPI, master, tx MSB first
+    UCB0CTLW0 |= UCMST;
+    UCB0CTLW0 |= UCSYNC;
+
+    UCB0CTLW0 |= UCSSEL__SMCLK;     // prescale to 2.667 MHz
+    UCB0BRW = 6;
+
+    UCB0CTLW0 &= ~UCSWRST;          // take out of software reset
 
 }
 
-// Helper function to change color
-void setPixelColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
+// Set the color for an individual pixel
+void setColor(u_int n, u_char g, u_char r, u_char b) {
 
-    rgb[index].red   = r;
-    rgb[index].green = g;
-    rgb[index].blue  = b;
-    
+    ledStick[n].green = g;
+    ledStick[n].red   = r;
+    ledStick[n].blue  = b;
+
 }
 
-// Init LEDs to OFF
-void initLED() {
+// Send color to the Stick
+void sendStick() {
 
-  uint8_t i;
-  for(i = 0; i < numPixels; i++) {
-    rgb[i].red = rgb[i].green = rgb[i].blue = rgb[i].white = 0;
-    for(i = 0; i < 24; i++) {
-      timeLED(0);
+    __bic_SR_register(GIE);                         // disable interrupts
+
+    // Send GRB color to each pixel
+    unsigned int i, j;
+    for(i = 0; i < PixNumber; i++) {
+        u_char *grb = (u_char *) & ledStick[i];     // get grb color for i-th pixel
+
+        // Send green values, red values, then blue values
+        for(j = 0; j < 3; j++) {
+            u_char mask = 0x80;                     // 0b1000000
+
+            // check each bit
+            while(mask != 0) {
+                while(!(UCB0IFG & UCTXIFG));        // wait to tx
+                if(grb[j] & mask) {
+                    UCB0TXBUF = highTide;           // send 1
+                } else {
+                    UCB0TXBUF = lowTide;            // send 0
+                }
+                mask >>= 1;                         // check next bit
+            }
+        }
     }
-    __delay_cycles(400);
-  }
+
+    __delay_cycles(800);            // send reset signal
+    __bis_SR_register(GIE);
 
 }
 
-// Init DCO to 8MHz
-void init_8MHz() {
+// Clear the Stick, turn all pixels off
+void clearStick() {
 
-  __bis_SR_register(SCG0);                  // disable FLL, select ref clock
-  CSCTL3 = SELREF__REFOCLK;
-
-  // clear CSCTL0 register
-  CSCTL0 = 0;
-  CSCTL1 = DCORSEL_3;
-
-  /* Set FLLN and FLLD for target frequency (8MHz / 32768Hz = 244.14)
-     Formula: FDCO = (FLLN + 1) * (Fref / FLLD)
-     8MHz = (243 + 1) * (32768Hz / 1) */
-  CSCTL2 = FLLD_0 + 243;
-  __delay_cycles(3);
-
-  // Enable FLL
-  __bic_SR_register(SCG0);
-  while(CSCTL7 & (FLLUNLOCK | FLLUNLOCK1));
+    StickFiller(0x00, 0x00, 0x00);
 
 }
+
+// Populate whole Stick with one color
+void StickFiller(u_char g, u_char r, u_char b) {
+
+    int i;
+    for(i = 0; i < PixNumber; i++) {
+        setColor(i, g, r, b);
+    }
+    sendStick();
+}
+
+/* References:   
+I want to cite these sources for inspiration & useful how-to
+that helped me get started.
+               
+                - Mjmeli: MSP430 | NeoPixel library https://github.com/mjmeli/MSP430-NeoPixel-WS2812-Library/tree/master
+*/
