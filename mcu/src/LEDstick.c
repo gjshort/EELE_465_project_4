@@ -22,7 +22,7 @@ typedef struct {
 } GRB;
 
 static GRB ledStick[PixNumber] = { {0, 0, 0} };
-
+int color_state = 0;
 // Initialize main clk to 16MHz
 void init_CLK() {
 
@@ -117,6 +117,48 @@ void StickFiller(u_char g, u_char r, u_char b) {
         setColor(i, g, r, b);
     }
     sendStick();
+}
+
+/********************  
+    This was the button used for switching
+    between RTC registers and LED bar patterns.
+
+    Now it will be used to change color of LED stick
+************************************************************/
+void init_LEDstick_color_button() {
+
+    P3SEL0 &= ~BIT5;    // Set to Digital IO
+    P3SEL1 &= ~BIT5;
+
+    P3DIR &= ~BIT5;     // Set as input
+    P3REN |= BIT5;      // Enable resistor
+    P3OUT &= ~BIT5;     // Pull down resistor
+
+}
+
+void stickColor_change() {
+
+    color_state++;
+    if(color_state > 4) {
+        color_state = 0;
+    }
+
+    switch(color_state) {
+        case 1:     setColor(0, 0, 55, 0);      // red
+        break;
+
+        case 2:     setColor(0, 55, 0, 0);      // green
+        break;
+
+        case 3:     setColor(0, 0, 0, 55);      // blue
+        break;
+
+        case 4:     setColor(0, 55, 55, 55);    // white
+        break;
+
+        default:    break;
+    }
+
 }
 
 /* References:   

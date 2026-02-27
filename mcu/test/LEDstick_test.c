@@ -19,6 +19,7 @@ int main(void)
     // Setup CLK, SPI
     init_CLK();
     init_SPI();
+    init_LEDstick_color_button();
 
     // Disable low-power mode
     PM5CTL0 &= ~LOCKLPM5;
@@ -28,9 +29,14 @@ int main(void)
 
     while(1) {
 
-        setColor(4, 10, 10, 10);
+        if((P3IN & BIT5) != 0) {
+            __delay_cycles(100);
+            stickColor_change();
+            __delay_cycles(8000000);
+        }
+
         sendStick();
-        __delay_cycles(8000000);           // 1 sec delay          
+        //__delay_cycles(8000000);           // 1/2 sec delay          
     }
 
 }
