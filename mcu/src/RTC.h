@@ -15,7 +15,6 @@
 #define RTC_YR_REG              0x06               // year
 #define CONTROL_REG             0x07               // control / mode
 
-
 // ST and VBATEN configuration bits
 #define ST_BIT                  0x80               // start oscillator bit (held in SEC register)
 #define VBATEN_BIT              0x08               // enable backup battery (held in WKDAY register)

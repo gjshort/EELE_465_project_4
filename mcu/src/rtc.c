@@ -2,6 +2,20 @@
 #include "eUSCI.h"
 #include "rtc.h"
 
+/**
+ * Writes the time to the RTC one register at a time.
+ * @param rtc_time - pointer to a created RTC struct
+ * @param rtc_reg_ptr - the RTC register being written to
+ *
+ * The value of rtc_reg_ptr dictates which RTC register is being
+ * written to. When rtc_reg_ptr is 0, the RTC's internal register
+ * pointer is set to the "Seconds" register. Therefore, to perform
+ * a multi-byte I2C write, the user should start rtc_reg_ptr
+ * at 0 (externally) and then increment it before each subsequent
+ * call to this function.
+ *
+ * This function assumes rtc_time has been updated.
+ */
 void rtc_write_time_reg(MCP7940N_time *rtc_time, uint8_t *rtc_reg_ptr)
 {
     switch(*rtc_reg_ptr)
@@ -35,6 +49,18 @@ void rtc_write_time_reg(MCP7940N_time *rtc_time, uint8_t *rtc_reg_ptr)
     }
 }
 
+/**
+ * Reads the time from the RTC one register at a time.
+ * @param rtc_time - pointer to a created RTC struct
+ * @param rtc_reg_ptr - the RTC register being read from
+ *
+ * The value of rtc_reg_ptr dictates which RTC register is being
+ * read from. To perform a multi-byte I2C read, the user should 
+ * start rtc_reg_ptr at 0 (externally) and then increment it 
+ * before each subsequent call to this function.
+ *
+ * This function assumes UCB0RXBUF has been updated.
+ */
 void rtc_read_time_reg(MCP7940N_time *rtc_time, uint8_t *rtc_reg_ptr)
 {
     switch(*rtc_reg_ptr)
