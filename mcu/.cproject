@@ -92,7 +92,7 @@
                         </toolChain>
                     </folderInfo>
                     <sourceEntries>
-                        <entry excluding="test/uARTtest.c|test/rtc_i2c_test.c|test/uART_I2C_test.c|src/main.c|test/WritetoRTC.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="test/rtc_to_uart_test.c|test/rtc_i2c_test.c|test/uART_I2C_test.c|src/main.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                     </sourceEntries>
                 </configuration>
             </storageModule>

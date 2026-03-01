@@ -1,9 +1,63 @@
 #include <msp430fr2153.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 #include "utils.h"
 #include "rtc.h"
 #include "eUSCI.h"
+
+// UART MESSAGE IDs
+#define TIME 't'
+#define WINDOW 'w'
+
+/**
+ * 
+ *
+ * Format: [id, ,{data}]
+ */
+void parse_uart_msg(char *buf, MCP7940N_time *rtc_time)
+{
+    switch(buf[0])
+    {
+    case TIME: 
+        parse_uart_time_msg(buf, rtc_time);
+        break;
+    case WINDOW:
+        //parse_uart_window_msg();
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+ * Parses a message containing the time from UART
+ * @param rtc_time - pointer to a defined struct for the RTC
+ * @param buf - incoming UART message
+ *
+ * Format - [id, ,{data}] --> Data = HH:MM:SS MM/DD/YY\r\n\0
+ */
+void parse_uart_time_msg(char *buf, MCP7940N_time *rtc_time)
+{
+    char *token = strtok(buf + 2, ":");                 // Extract hours
+    rtc_time->hours = DECtoBCD((uint8_t)atoi(token));
+
+    token = strtok(NULL, ":");                          // Extract minutes
+    rtc_time->minutes = DECtoBCD((uint8_t)atoi(token));
+
+    token = strtok(NULL, " ");                          // Extract seconds
+    rtc_time->seconds = DECtoBCD((uint8_t)atoi(token)) | ST_BIT;
+
+    token = strtok(NULL, "/");                          // Extract month
+    rtc_time->month = DECtoBCD((uint8_t)atoi(token));
+
+    token = strtok(NULL, "/");                          // Extract day
+    rtc_time->date = DECtoBCD((uint8_t)atoi(token));
+
+    token = strtok(NULL, "\r\n\0");                          // Extract year
+    rtc_time->year = DECtoBCD((uint8_t)atoi(token));
+}
 
 /**
  * Pack the given buffer with the RTC time in ASCII
@@ -50,6 +104,19 @@
 void uart_tx_time_data(char *time_buf, uint8_t time_data_idx)
 {
     UCA1TXBUF = time_buf[time_data_idx];
+}
+
+// Funtions to convert between BCD & decimal
+uint8_t BCDtoDEC(uint8_t BCD) {
+
+    return (uint8_t)( (BCD >> 4) * 10 + (BCD * 0x0F) );         // convert BCD to DEC
+
+}
+
+uint8_t DECtoBCD(uint8_t DEC) {
+
+    return (uint8_t)( (DEC / 10 << 4) | (DEC % 10) );           // convert DEC to BCD
+
 }
 
 /*

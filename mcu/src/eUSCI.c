@@ -200,19 +200,6 @@ void MCP7940N_GetTime(MCP7940N_time *time) {
 }
 */
 
-// Funtions to convert between BCD & decimal
-uint8_t BCDtoDEC(uint8_t BCD) {
-
-    return (uint8_t)( (BCD >> 4) * 10 + (BCD * 0x0F) );         // convert BCD to DEC
-
-}
-
-uint8_t DECtoBCD(uint8_t DEC) {
-
-    return (uint8_t)( (DEC / 10 << 4) | (DEC % 10) );           // convert DEC to BCD
-
-}
-
 /*
 // Function called by eUSCI_B0 ISR to write to rtc
 void WriteRTC() {
