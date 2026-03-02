@@ -29,10 +29,6 @@ static volatile I2C_MODE rtc_mode;
 static volatile bool write_to_rtc;      // Start write transaction
 static volatile bool read_from_rtc;     // Start read transaction
 
-// UART
-static volatile bool uart_tx_busy;
-
-
 
 int main(void)
 {
@@ -64,6 +60,7 @@ int main(void)
     // UART
     bool uart_start_time_tx = false;
     bool uart_start_temp_tx = false;
+    bool uart_tx_busy = false;
     uint8_t uart_tx_msg_idx = 0x00;
     char uart_tx_msg_buf[24] = {0};
 

@@ -157,7 +157,7 @@ class App(tk.Tk):
         date_time = datetime.now()
 
         # Format according to how the MCU wants the date/time formatted
-        formatted_datetime = date_time.strftime("%Y/%m/%d %H:%M:%S")
+        formatted_datetime = date_time.strftime("t %H:%M:%S %m/%d/%y\r\n\0")
 
         # Push date/time string into the queue for the other thread to process
         self._gui_rtc_date_time_queue.put(formatted_datetime)
@@ -201,38 +201,12 @@ def mcu_interface_worker(
             this signals that we need to finish the thread and clean up so the
             main loop can join this thread and quit the program gracefully.
     """
-    TEMPERATURE_UPDATE_PERIOD = 1
-    last_temperature_update_time = 0
-    temperature = 1.0
-
     rtc_date_time = None
 
+    serial = serial.Serial('COM8', 115200)  # open serial port to MCU
+
     while not quit_event.is_set():
-        # Dummy for updating the temperature and time every 1 second.
-        # Most things in this if statement can be deleted.
-        current_time = time.time()
-        if current_time - last_temperature_update_time >= TEMPERATURE_UPDATE_PERIOD:
-            last_temperature_update_time = current_time
-            temperature = (temperature + 1) % 100
-
-            # Send the most recent temperature to the GUI.
-            temperature_queue.put(temperature)
-
-            # You don't have to worry about what's happening here. This is just for testing.
-            # You should fetch the time from UART stream
-            if rtc_date_time:
-                date_time = datetime.strptime(rtc_date_time, "%Y/%m/%d %H:%M:%S")
-
-                # Make time count backwards just for fun
-                seconds = date_time.second - 1
-                if seconds < 0:
-                    seconds = 59
-                date_time = date_time.replace(second=seconds)
-
-                rtc_date_time = date_time.strftime("%Y/%m/%d %H:%M:%S")
-
-                # Send the most recent RTC date/time to the GUI.
-                mcu_rtc_date_time_queue.put(rtc_date_time)
+        
 
         if not gui_rtc_date_time_queue.empty():
             # We've received an updated date/time from the GUI.
