@@ -57,3 +57,6 @@ targetConfigs/
 
 # macOS DS_Store
 .DS_Store
+
+# Draw.io
+*.drawio.bkp
