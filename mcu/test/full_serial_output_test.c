@@ -30,7 +30,7 @@ static volatile bool write_to_rtc;      // Start write transaction
 static volatile bool read_from_rtc;     // Start read transaction
 
 // UART
-static volatile bool uart_start_time_tx;
+static volatile bool uart_tx_busy;
 
 
 
@@ -45,7 +45,7 @@ int main(void)
     i2c_rx_irq = false;
     i2c_tx_irq = false;
     read_from_rtc = false;
-    uart_start_time_tx = false;
+    uart_tx_busy = false;
 
     // --------- Init locals ----------
     // Temp. sensor
@@ -62,8 +62,10 @@ int main(void)
     write_to_rtc = true;
 
     // UART
-    uint8_t uart_time_data_idx = 0x00;
-    char uart_time_data_buf[20] = {0};
+    bool uart_start_time_tx = false;
+    bool uart_start_temp_tx = false;
+    uint8_t uart_tx_msg_idx = 0x00;
+    char uart_tx_msg_buf[24] = {0};
 
     // ------------- INIT MCU -----------------
     // Temperature sensor ADC 
@@ -98,7 +100,7 @@ int main(void)
     {
         // --------------- I2C --------------------
         // Start a write
-        if(write_to_rtc == true)
+        if(write_to_rtc)
         {
             write_to_rtc = false;
             set_eUSCI_B0_count(RTC_NUM_TIME_REGS + 1);  // Write reg ptr + time registers
@@ -107,7 +109,7 @@ int main(void)
         }
 
         // Transmit register pointer preparing for read
-        if(read_from_rtc == true)
+        if(read_from_rtc)
         {
             read_from_rtc = false;
             set_eUSCI_B0_count(1);
@@ -116,7 +118,7 @@ int main(void)
         }
 
         // Handle I2C Rx IRQ
-        if(i2c_rx_irq == true)
+        if(i2c_rx_irq)
         {
             i2c_rx_irq = false;
             rtc_read_time_reg(&rtc_time, &rtc_reg_idx);
@@ -133,7 +135,7 @@ int main(void)
         }
 
         // Handle I2C Tx IRQ
-        if(i2c_tx_irq == true)
+        if(i2c_tx_irq)
         {
             i2c_tx_irq = false;
             if(rtc_mode == I2C_WRITE)                   // Writing time to RTC
@@ -172,7 +174,6 @@ int main(void)
             start_temp_adc = false;
             ADCMCTL0 |= ADCINCH_5;              // Set ADC source to P1.5
             ADCCTL0 |= ADCENC | ADCSC;          // Start ADC conversion
-            while((ADCIFG & ADCIFG0) == 0) {}   // Wait for conversion
         }
         // When ADC is done, take new temp reading and add to
         // ring buffer then average buffer
@@ -202,14 +203,15 @@ int main(void)
                 lmt87_temp_str[i] = '\0';
             }
             ftoa_2(lmt87_temp_avg, lmt87_temp_str);
+            uart_start_temp_tx = true;
         }
 
         // -------------- UART -------------------
         // Start Tx of time after an RTC read completed
-        if(uart_start_time_tx == true)
+        if(uart_start_time_tx && !uart_tx_busy)
         {
-            // Load first byte of time data into Tx Buf
             uart_start_time_tx = false;   
+            uart_tx_busy = true;
             TB1CCTL0 &= ~CCIE;          // Don't let TB1 trigger during Tx
 
             // Enable UART IRQ
@@ -217,26 +219,44 @@ int main(void)
             UCA1IE |= UCTXCPTIE;
 
             // Pack time buffer and start transmit
-            pack_time_buffer(&rtc_time, uart_time_data_buf);
-            uart_tx_time_data(uart_time_data_buf, uart_time_data_idx);
-            uart_time_data_idx++;
+            pack_time_buffer(&rtc_time, uart_tx_msg_buf);
+            uart_tx_msg_data(uart_tx_msg_buf, uart_tx_msg_idx);
+            uart_tx_msg_idx++;
+        }
+
+        // Start Tx of temp. afer an ADC read completed
+        if(uart_start_temp_tx && !uart_tx_busy)
+        {
+            uart_start_temp_tx = false;
+            uart_tx_busy = true;
+            TB1CCTL0 &= ~CCIE;          // Don't let TB1 trigger during Tx
+
+            // Enable UART IRQ
+            UCA1IFG &= ~UCTXCPTIFG;     
+            UCA1IE |= UCTXCPTIE;
+
+            // Pack data buffer with temp. and start transmit
+            pack_temp_buffer(lmt87_temp_str, uart_tx_msg_buf);
+            uart_tx_msg_data(uart_tx_msg_buf, uart_tx_msg_idx);
+            uart_tx_msg_idx++;
         }
 
         // TXCPT IRQ
-        if(uart_txcpt_irq == true)
+        if(uart_txcpt_irq)
         {
             uart_txcpt_irq = false;
-            if(uart_time_data_idx >= sizeof(uart_time_data_buf))
+            if(uart_tx_msg_buf[uart_tx_msg_idx - 1] == '\0')
             {   // Reset index, disable UART IRQ, enable TB1 IRQ
-                uart_time_data_idx = 0;
+                uart_tx_msg_idx = 0;
+                uart_tx_busy = false;
                 UCA1IE &= ~UCTXCPTIE;
                 TB1CCTL0 &= ~CCIFG;     
                 TB1CCTL0 |= CCIE;
             }
             else 
             {   // Load next character. After, increment index
-                uart_tx_time_data(uart_time_data_buf, uart_time_data_idx);
-                uart_time_data_idx++;
+                uart_tx_msg_data(uart_tx_msg_buf, uart_tx_msg_idx);
+                uart_tx_msg_idx++;
             }
         }
 

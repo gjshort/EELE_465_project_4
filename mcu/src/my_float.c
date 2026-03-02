@@ -63,6 +63,11 @@ void ftoa_2(float data, char result[16])
         rev_frac_part /= 10;
     }
 
+    if(rev_frac_part == 0)
+    {
+        result[digit_idx++] = '0';
+    }
+
     // String null termination
     result[digit_idx] = '\0';
 }

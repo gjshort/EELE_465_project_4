@@ -10,6 +10,7 @@
 // UART MESSAGE IDs
 #define TIME 't'
 #define WINDOW 'w'
+#define TEMP 'c'
 
 /**
  * Interprets the UART message ID to pass parsing off
@@ -65,47 +66,74 @@ void parse_uart_time_msg(char *buf, MCP7940N_time *rtc_time)
  * Pack the given buffer with the RTC time in ASCII
  * @param rtc_time - pointer to a defined struct for the RTC
  * @param buf - buffer the time message will be written to.
- *              MUST BE OF LENGTH 20 OR MORE. USER BEWARE.
+ *              MUST BE OF LENGTH 22 OR MORE. USER BEWARE.
  *
- * Format:  HH:MM:SS MM/DD/YY\r\n\0
+ * Format: "d HH:MM:SS MM/DD/YY\r\n\0"
  *
  */
  void pack_time_buffer(MCP7940N_time *rtc_time, char *buf)
  {
-    buf[0]  = ((rtc_time->hours & 0x30) >> 4) + '0';      // strip 12/24hr mode bit
-    buf[1]  = (rtc_time->hours & 0x0F) + '0';
-    buf[2]  = ':';
-    buf[3]  = ((rtc_time->minutes & 0xF0) >> 4) + '0';
-    buf[4]  = (rtc_time->minutes & 0x0F) + '0';
-    buf[5]  = ':';
-    buf[6]  = ((rtc_time->seconds & 0x70) >> 4) + '0';    // Strip ST bit
-    buf[7]  = (rtc_time->seconds & 0x0F) + '0';
-    buf[8]  = ' ';
-    buf[9]  = ((rtc_time->month & 0x10) >> 4) + '0';      // Strip LPYR bit
-    buf[10] = (rtc_time->month & 0x0F) + '0';
-    buf[11] = '/';
-    buf[12] = ((rtc_time->date & 0x30) >> 4) + '0';
-    buf[13] = (rtc_time->date & 0x0F) + '0';
-    buf[14] = '/';
-    buf[15] = ((rtc_time->year & 0xF0) >> 4) + '0';
-    buf[16] = (rtc_time->year & 0x0F) + '0';
-    buf[17] = '\r';
-    buf[18] = '\n';
-    buf[19] = '\0';
+    buf[0]  = TIME;
+    buf[1]  = ' ';
+    buf[2]  = ((rtc_time->hours & 0x30) >> 4) + '0';      // strip 12/24hr mode bit
+    buf[3]  = (rtc_time->hours & 0x0F) + '0';
+    buf[4]  = ':';
+    buf[5]  = ((rtc_time->minutes & 0xF0) >> 4) + '0';
+    buf[6]  = (rtc_time->minutes & 0x0F) + '0';
+    buf[7]  = ':';
+    buf[8]  = ((rtc_time->seconds & 0x70) >> 4) + '0';    // Strip ST bit
+    buf[9]  = (rtc_time->seconds & 0x0F) + '0';
+    buf[10] = ' ';
+    buf[11] = ((rtc_time->month & 0x10) >> 4) + '0';      // Strip LPYR bit
+    buf[12] = (rtc_time->month & 0x0F) + '0';
+    buf[13] = '/';
+    buf[14] = ((rtc_time->date & 0x30) >> 4) + '0';
+    buf[15] = (rtc_time->date & 0x0F) + '0';
+    buf[16] = '/';
+    buf[17] = ((rtc_time->year & 0xF0) >> 4) + '0';
+    buf[18] = (rtc_time->year & 0x0F) + '0';
+    buf[19] = '\r';
+    buf[20] = '\n';
+    buf[21] = '\0';
  }
 
 /**
+ * Pack the given buffer with the recent average temp. in ASCII
+ * @param temp_str - an ASCII string representation of the temp.
+ * @param buf - buffer the temp message will be written to.
+ * 
+ * Format: "c xxx.xxx\r\n\0" where xxx.xxx is a float in ASCII
+ */
+void pack_temp_buffer(char *temp_str, char *buf)
+{
+    buf[0] = TEMP;
+    buf[1] = ' ';
+
+    // Copy over only necessary bytes from temp_str
+    uint8_t i = 2;
+    while(temp_str[i-2] != '\0')
+    {
+        buf[i] = temp_str[i-2];
+        i++;
+    }
+
+    buf[i++] = '\r';
+    buf[i++] = '\n';
+    buf[i]   = '\0';
+}
+
+/**
  * Updates the A1 UART Tx Buffer with the next character 
- * in the buffer holding the formatted RTC time.
- * @param time_buf - buffer holding the formatted RTC time
- * @param time_data_idx - index of the next character to be written
+ * in the buffer holding the formatted message
+ * @param buf - buffer holding the formatted UART message
+ * @param tx_msg_idx - index of the next character to be written
  *
  * NO BOUNDS CHECKING. USER BEWARE
  *
  */
-void uart_tx_time_data(char *time_buf, uint8_t time_data_idx)
+void uart_tx_msg_data(char *buf, uint8_t tx_msg_idx)
 {
-    UCA1TXBUF = time_buf[time_data_idx];
+    UCA1TXBUF = buf[tx_msg_idx];
 }
 
 /**
