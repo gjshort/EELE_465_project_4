@@ -4,6 +4,8 @@ Use this file to cite any instance of LLM-generated code that was used in your p
 
 Please be honest! I'm not trying to penalize you. I'm trying to use this information to inform how I teach this class and ensure that students have the programming skills needed to succeed. If you generated code and didn't modify it, please say so.
 
+You may delete all text in this file (except for the first heading) and replace it with your citations.
+
 ## Code generation citation template
 
 For each file that contains generated code, fill out the following bullet points.
