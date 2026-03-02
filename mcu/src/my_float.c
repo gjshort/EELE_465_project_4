@@ -57,15 +57,16 @@ void ftoa_2(float data, char result[16])
     // Fractional part (2 places truncated of precision)
     uint16_t frac_part = (uint16_t)((data - int_part) * 100);  // 0.12345 --> 12
     uint16_t rev_frac_part = reverse_digits(frac_part);
-    while(rev_frac_part > 0)
-    {
-        result[digit_idx++] = (rev_frac_part % 10) + '0';
-        rev_frac_part /= 10;
-    }
 
     if(rev_frac_part == 0)
     {
         result[digit_idx++] = '0';
+    }
+
+    while(rev_frac_part > 0)
+    {
+        result[digit_idx++] = (rev_frac_part % 10) + '0';
+        rev_frac_part /= 10;
     }
 
     // String null termination
