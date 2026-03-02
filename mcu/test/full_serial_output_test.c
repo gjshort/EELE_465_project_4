@@ -17,14 +17,22 @@ static volatile bool is_temp_adc_done;
 static volatile bool i2c_rx_irq;
 static volatile bool i2c_tx_irq;
 
+// UART
+static volatile bool uart_txcpt_irq;
+
 // -------- Globals ----------
+// Temp sensor ADC
+static volatile uint16_t temp_adc_val;
+
 // I2C
 static volatile I2C_MODE rtc_mode;
 static volatile bool write_to_rtc;      // Start write transaction
 static volatile bool read_from_rtc;     // Start read transaction
 
-// Temp sensor ADC
-static volatile uint16_t temp_adc_val;
+// UART
+static volatile bool uart_start_time_tx;
+
+
 
 int main(void)
 {
@@ -37,6 +45,7 @@ int main(void)
     i2c_rx_irq = false;
     i2c_tx_irq = false;
     read_from_rtc = false;
+    uart_start_time_tx = false;
 
     // --------- Init locals ----------
     // Temp. sensor
@@ -52,6 +61,10 @@ int main(void)
     rtc_mode = I2C_WRITE;       // Write initial time to RTC
     write_to_rtc = true;
 
+    // UART
+    uint8_t uart_time_data_idx = 0x00;
+    char uart_time_data_buf[20] = {0};
+
     // ------------- INIT MCU -----------------
     // Temperature sensor ADC 
     init_adc_a5();
@@ -60,6 +73,9 @@ int main(void)
     init_eUSCI_B0_i2c();
     set_eUSCI_B0_slave_addr(MCP7940N_I2C_ADDR);
     
+    // UART
+    init_eUSCI_A1_uart();
+
     // TB1 
     TB1CTL |= TBCLR;
     TB1CTL |= TBSSEL__SMCLK;    // 1 MHz
@@ -105,8 +121,9 @@ int main(void)
             i2c_rx_irq = false;
             rtc_read_time_reg(&rtc_time, &rtc_reg_idx);
             if(rtc_reg_idx == RTC_NUM_TIME_REGS - 1)    // Done reading
-            {
+            {   
                 rtc_reg_idx = 0;
+                uart_start_time_tx = true;              // Start UART Tx of time
             }
             else                                        // Still reading
             {
@@ -187,6 +204,42 @@ int main(void)
             ftoa_2(lmt87_temp_avg, lmt87_temp_str);
         }
 
+        // -------------- UART -------------------
+        // Start Tx of time after an RTC read completed
+        if(uart_start_time_tx == true)
+        {
+            // Load first byte of time data into Tx Buf
+            uart_start_time_tx = false;   
+            TB1CCTL0 &= ~CCIE;          // Don't let TB1 trigger during Tx
+
+            // Enable UART IRQ
+            UCA1IFG &= ~UCTXCPTIFG;     
+            UCA1IE |= UCTXCPTIE;
+
+            // Pack time buffer and start transmit
+            pack_time_buffer(&rtc_time, uart_time_data_buf);
+            uart_tx_time_data(uart_time_data_buf, uart_time_data_idx);
+            uart_time_data_idx++;
+        }
+
+        // TXCPT IRQ
+        if(uart_txcpt_irq == true)
+        {
+            uart_txcpt_irq = false;
+            if(uart_time_data_idx >= sizeof(uart_time_data_buf))
+            {   // Reset index, disable UART IRQ, enable TB1 IRQ
+                uart_time_data_idx = 0;
+                UCA1IE &= ~UCTXCPTIE;
+                TB1CCTL0 &= ~CCIFG;     
+                TB1CCTL0 |= CCIE;
+            }
+            else 
+            {   // Load next character. After, increment index
+                uart_tx_time_data(uart_time_data_buf, uart_time_data_idx);
+                uart_time_data_idx++;
+            }
+        }
+
     }
 
 }
@@ -216,13 +269,32 @@ __interrupt void EUSCI_B0_I2C_ISR(void)
 {
     switch(UCB0IV) 
     {
-    case RXIFG0:
+    case RXIFG0:            // Received byte
         i2c_rx_irq = true;
         break;
-    case TXIFG0:
+    case TXIFG0:            // Need to load byte
         i2c_tx_irq = true;
         break;
     default:
         break;
     }
+}
+
+// UART ISR
+#pragma vector = EUSCI_A1_VECTOR
+__interrupt void EUSCI_A1_UART_ISR(void) 
+{
+    switch(UCA1IV)
+    {
+    case TXCPTIFG:              // Done transmitting byte
+        UCA1IFG &= ~UCTXCPTIFG; // Clear IRQ flag
+        uart_txcpt_irq = true;
+        break;
+    case RXIFG:                 // Receieved byte
+        UCA1IFG &= ~UCRXIFG;    // Clear IRQ flag
+        break;
+    default:
+        break;
+    }
+
 }
