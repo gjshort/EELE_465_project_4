@@ -207,13 +207,27 @@ def mcu_interface_worker(
 
     while not quit_event.is_set():
         
+        # Parse MCU serial data
+        if(serial.in_waiting() > 0)
+            mcu_msg = serial.readline()
+            msg_fields = mcu_msg.split(' ', 1)
 
+            if(msg_fields[0] == 't')            # Time data, format: HH:MM:SS MM/DD/YY
+                rtc_date_time = datetime.strptime(msg_fields[1], "%H:%M:%S %m/%d/%y")
+                mcu_rtc_date_time_queue.put(rtc_date_time)
+
+            else if(msg_fields[0] == 'c')       # Temperature data, format: xx.xx
+
+
+
+        # Send time to RTC
         if not gui_rtc_date_time_queue.empty():
             # We've received an updated date/time from the GUI.
             # Send the updated date/time to the MCU.
             rtc_date_time = gui_rtc_date_time_queue.get()
             print(rtc_date_time)
 
+        # Send window size to RTC
         if not moving_avg_window_size_queue.empty():
             # We've reaceived an updated moving avg window size from the GUI.
             # Send the updated window size to the MCU.
@@ -221,6 +235,7 @@ def mcu_interface_worker(
             print(f"window size = {moving_avg_window_size}")
 
     # Gracefully close serial port here...
+    serial.close()
     print("gracefully handling shutdown... :)")
 
 
