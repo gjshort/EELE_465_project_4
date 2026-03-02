@@ -208,18 +208,22 @@ def mcu_interface_worker(
     while not quit_event.is_set():
         
         # Parse MCU serial data
-        if(mcu_serial.in_waiting > 0):
-            mcu_msg = (mcu_serial.readline()).decode('utf-8')
-            #msg_clean = mcu_msg.split('\x00')[0]
-            print(mcu_msg)
-            msg_fields = mcu_msg.split(' ', 1)
+        # Format: "{ID} {Data}\r\n"
+        try:
+            if(mcu_serial.in_waiting > 0):
+                mcu_msg = (mcu_serial.readline()).decode('utf-8')
+                print(mcu_msg)
+                msg_fields = mcu_msg.split(' ', 1)
 
-            if(msg_fields[0] == 't'):            # Time data, format: HH:MM:SS MM/DD/YY
-                rtc_date_time = datetime.strptime(msg_fields[1], "%H:%M:%S %m/%d/%y\r\n")
-                mcu_rtc_date_time_queue.put(rtc_date_time)
+                if(msg_fields[0] == 't'):            # Time data, format: HH:MM:SS MM/DD/YY
+                    rtc_date_time = datetime.strptime(msg_fields[1], "%H:%M:%S %m/%d/%y\r\n")
+                    mcu_rtc_date_time_queue.put(rtc_date_time)
 
-            #else if(msg_fields[0] == 'c')       # Temperature data, format: xx.xx
-
+                elif(msg_fields[0] == 'c'):       # Temperature data, format: xx.xx
+                    new_avg_temp = float(msg_fields[1])
+                    temperature_queue.put(new_avg_temp)
+        except:
+            print("Error parsing message from MCU")
 
 
         # Send time to RTC
