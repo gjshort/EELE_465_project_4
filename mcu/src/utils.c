@@ -125,3 +125,29 @@ uint8_t BCDtoDEC(uint8_t BCD) {
 uint8_t DECtoBCD(uint8_t DEC) {
     return (uint8_t)( (DEC / 10 << 4) | (DEC % 10) );           // convert DEC to BCD
 }
+
+/**
+ * Inits the A5 ADC input
+ */
+void init_adc_a5()
+{
+    P1SEL1 |= BIT5;
+    P1SEL0 |= BIT5;         // Set P1.5 to analog input
+    
+    //ADCCTL0
+    ADCCTL0 &= ~ADCSHT;     //Clear sample and hold timer
+    ADCCTL0 |= ADCSHT_2;    //16 ADCCLK cycles per sample
+    ADCCTL0 |= ADCON;       //Turn ADC on
+
+    //ADCCTL1
+    ADCCTL1 |= ADCSHP;      //Sample signal comes from sample timer
+    ADCCTL1 |= ADCSSEL_2;   //Use SMCLK (1 MHz)
+
+    //ADCCTL2
+    ADCCTL2 &= ~ADCRES;     //Clear resolution
+    ADCCTL2 |= ADCRES_2;    //Set to 12 bit resolution
+    
+    // ADC IRQ
+    ADCIFG &= ~ADCIFG0;     //Clear IRQ flag
+    ADCIE |= ADCIE0;        //Enable conversion completion IRQ
+}
