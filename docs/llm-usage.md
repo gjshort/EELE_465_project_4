@@ -8,7 +8,7 @@ For each file that contains generated code, fill out the following bullet points
 
 *Required*:
 
-- **Name of the file that contains generated code**: <name-of-file>
+- **Name of the file that contains generated code**: `name-of-file`
 - **Was the code modified by you? yes/no**:
 
 *Optional*:
@@ -16,7 +16,7 @@ For each file that contains generated code, fill out the following bullet points
 - **Names of functions that contain generated code**:
     - `name1`
     - `name2`
-- **Link to relevant chat history**: [<link text>](<link url>)
+- **Link to relevant chat history**: [link text](url)
 
 ### Example
 
