@@ -16,9 +16,9 @@ void init_eUSCI_A1_uart() {
 
 	UCA1CTLW0 |= UCSWRST;
 	UCA1CTLW0 |= UCSSEL__SMCLK;         // 1 MHz reference clock
-    // 115200 baud
-	UCA1BRW = 8;
-	UCA1MCTLW |= 0xD600;
+    // 57600 baud
+	UCA1BRW = 17;
+	UCA1MCTLW |= 0x4A00;
 
     P4SEL1 &= ~BIT2;                    // Port 4.2 for uART Rx
     P4SEL0 |= BIT2;

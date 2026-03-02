@@ -7,29 +7,25 @@
 #include "rtc.h"
 #include "eUSCI.h"
 
-// UART MESSAGE IDs
-#define TIME 't'
-#define WINDOW 'w'
-#define TEMP 'c'
-
 /**
- * Interprets the UART message ID to pass parsing off
+ * Interprets the UART message ID
  * @param buf - buffer full of incoming UART data
- * @param rtc_time - pointer to a create RTC struct 
- *
+ * @return - UART message ID
+ * 
  * Format: [id, ,{data}]
  */
-void parse_uart_msg(char *buf, MCP7940N_time *rtc_time)
+char parse_uart_msg(char *buf)
 {
     switch(buf[0])
     {
-    case TIME: 
-        parse_uart_time_msg(buf, rtc_time);
+    case ID_TIME: 
+        return ID_TIME;
         break;
-    case WINDOW:
-        //parse_uart_window_msg();
+    case ID_WINDOW:
+        return ID_WINDOW;
         break;
     default:
+        return ID_ERR;
         break;
     }
 }
@@ -58,7 +54,7 @@ void parse_uart_time_msg(char *buf, MCP7940N_time *rtc_time)
     token = strtok(NULL, "/");                          // Extract day
     rtc_time->date = DECtoBCD((uint8_t)atoi(token));
 
-    token = strtok(NULL, "\r\n\0");                          // Extract year
+    token = strtok(NULL, "\r\n");                          // Extract year
     rtc_time->year = DECtoBCD((uint8_t)atoi(token));
 }
 
@@ -73,7 +69,7 @@ void parse_uart_time_msg(char *buf, MCP7940N_time *rtc_time)
  */
  void pack_time_buffer(MCP7940N_time *rtc_time, char *buf)
  {
-    buf[0]  = TIME;
+    buf[0]  = ID_TIME;
     buf[1]  = ' ';
     buf[2]  = ((rtc_time->hours & 0x30) >> 4) + '0';      // strip 12/24hr mode bit
     buf[3]  = (rtc_time->hours & 0x0F) + '0';
@@ -106,7 +102,7 @@ void parse_uart_time_msg(char *buf, MCP7940N_time *rtc_time)
  */
 void pack_temp_buffer(char *temp_str, char *buf)
 {
-    buf[0] = TEMP;
+    buf[0] = ID_TEMP;
     buf[1] = ' ';
 
     // Copy over only necessary bytes from temp_str

@@ -19,6 +19,7 @@ static volatile bool i2c_tx_irq;
 
 // UART
 static volatile bool uart_txcpt_irq;
+static volatile bool uart_rx_irq;
 
 // -------- Globals ----------
 // Temp sensor ADC
@@ -40,6 +41,8 @@ int main(void)
     is_temp_adc_done = false;
     i2c_rx_irq = false;
     i2c_tx_irq = false;
+    uart_txcpt_irq = false;
+    uart_rx_irq = false;
     read_from_rtc = false;
 
     // --------- Init locals ----------
@@ -61,7 +64,10 @@ int main(void)
     bool uart_start_temp_tx = false;
     bool uart_tx_busy = false;
     uint8_t uart_tx_msg_idx = 0x00;
+    uint8_t uart_rx_msg_idx = 0x00;
     char uart_tx_msg_buf[24] = {0};
+    char uart_rx_msg_buf[24] = {0};
+
 
     // ------------- INIT MCU -----------------
     // Temperature sensor ADC 
@@ -73,6 +79,8 @@ int main(void)
     
     // UART
     init_eUSCI_A1_uart();
+    UCA1IFG &= ~UCRXIFG;
+    UCA1IE |= UCRXIE;       // Enable RX IRQ
 
     // TB1 
     TB1CTL |= TBCLR;
@@ -256,6 +264,36 @@ int main(void)
             }
         }
 
+        // Rx IRQ
+        if(uart_rx_irq)
+        {
+            uart_rx_irq = false;
+            if(UCA1RXBUF == '\n')
+            {   // Reset index, parse message
+                uart_rx_msg_idx = 0;
+                char msg_id = parse_uart_msg(uart_rx_msg_buf);
+                switch(msg_id)
+                {
+                case ID_TIME:
+                    parse_uart_time_msg(uart_rx_msg_buf, &rtc_time);
+                    rtc_mode = I2C_WRITE;
+                    write_to_rtc = true;
+                    break;
+                case ID_TEMP:
+                    break;
+                case ID_ERR:
+                    break;
+                default:
+                    break;
+                }
+            }
+            else 
+            {   // Store received byte into buffer
+                uart_rx_msg_buf[uart_rx_msg_idx] = UCA1RXBUF;
+                uart_rx_msg_idx++;
+            }
+        }
+
     }
 
 }
@@ -308,6 +346,7 @@ __interrupt void EUSCI_A1_UART_ISR(void)
         break;
     case RXIFG:                 // Receieved byte
         UCA1IFG &= ~UCRXIFG;    // Clear IRQ flag
+        uart_rx_irq = true;
         break;
     default:
         break;

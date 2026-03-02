@@ -157,7 +157,7 @@ class App(tk.Tk):
         date_time = datetime.now()
 
         # Format according to how the MCU wants the date/time formatted
-        formatted_datetime = date_time.strftime("t %H:%M:%S %m/%d/%y\r\n\0")
+        formatted_datetime = date_time.strftime("t %H:%M:%S %m/%d/%y\r\n")
 
         # Push date/time string into the queue for the other thread to process
         self._gui_rtc_date_time_queue.put(formatted_datetime)
@@ -203,7 +203,7 @@ def mcu_interface_worker(
     """
     rtc_date_time = None
 
-    mcu_serial = serial.Serial('/dev/ttyUSB0', 115200)  # open serial port to MCU
+    mcu_serial = serial.Serial('/dev/ttyUSB0', 57600)  # open serial port to MCU
 
     while not quit_event.is_set():
         
@@ -212,7 +212,7 @@ def mcu_interface_worker(
         try:
             if(mcu_serial.in_waiting > 0):
                 mcu_msg = (mcu_serial.readline()).decode('utf-8')
-                print(mcu_msg)
+                #print(mcu_msg)
                 msg_fields = mcu_msg.split(' ', 1)
 
                 if(msg_fields[0] == 't'):            # Time data, format: HH:MM:SS MM/DD/YY
@@ -226,12 +226,14 @@ def mcu_interface_worker(
             print("Error parsing message from MCU")
 
 
-        # Send time to RTC
+        # Send time to RTC after receiving time from GUI
         if not gui_rtc_date_time_queue.empty():
             # We've received an updated date/time from the GUI.
             # Send the updated date/time to the MCU.
             rtc_date_time = gui_rtc_date_time_queue.get()
-            print(rtc_date_time)
+            time_bytes = rtc_date_time.encode('ascii')
+            print(time_bytes)
+            mcu_serial.write(time_bytes)
 
         # Send window size to RTC
         if not moving_avg_window_size_queue.empty():

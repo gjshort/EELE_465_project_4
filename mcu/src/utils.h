@@ -6,7 +6,13 @@
 #include "eUSCI.h"
 #include "rtc.h"
 
-void parse_uart_msg(char*, MCP7940N_time*);
+// UART MESSAGE IDs
+#define ID_TIME 't'
+#define ID_WINDOW 'w'
+#define ID_TEMP 'c'
+#define ID_ERR '!'
+
+char parse_uart_msg(char*);
 void parse_uart_time_msg(char*, MCP7940N_time*);
 void pack_time_buffer(MCP7940N_time*, char*);
 void pack_temp_buffer(char*, char*);
