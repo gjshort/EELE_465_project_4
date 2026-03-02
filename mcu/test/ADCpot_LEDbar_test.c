@@ -1,5 +1,5 @@
 /***************************************
-* Author:   Gabe Story 
+* Author:   Grifin Short, Gabe Story 
 * Date:     02.22.2026
 * Class:    EELE 465
 * Purpose:  Basic code to test ADC on P1.1 | A1 | pin 6
