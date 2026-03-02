@@ -203,20 +203,22 @@ def mcu_interface_worker(
     """
     rtc_date_time = None
 
-    serial = serial.Serial('COM8', 115200)  # open serial port to MCU
+    mcu_serial = serial.Serial('/dev/ttyUSB0', 115200)  # open serial port to MCU
 
     while not quit_event.is_set():
         
         # Parse MCU serial data
-        if(serial.in_waiting() > 0)
-            mcu_msg = serial.readline()
+        if(mcu_serial.in_waiting > 0):
+            mcu_msg = (mcu_serial.readline()).decode('utf-8')
+            #msg_clean = mcu_msg.split('\x00')[0]
+            print(mcu_msg)
             msg_fields = mcu_msg.split(' ', 1)
 
-            if(msg_fields[0] == 't')            # Time data, format: HH:MM:SS MM/DD/YY
-                rtc_date_time = datetime.strptime(msg_fields[1], "%H:%M:%S %m/%d/%y")
+            if(msg_fields[0] == 't'):            # Time data, format: HH:MM:SS MM/DD/YY
+                rtc_date_time = datetime.strptime(msg_fields[1], "%H:%M:%S %m/%d/%y\r\n")
                 mcu_rtc_date_time_queue.put(rtc_date_time)
 
-            else if(msg_fields[0] == 'c')       # Temperature data, format: xx.xx
+            #else if(msg_fields[0] == 'c')       # Temperature data, format: xx.xx
 
 
 
@@ -235,7 +237,7 @@ def mcu_interface_worker(
             print(f"window size = {moving_avg_window_size}")
 
     # Gracefully close serial port here...
-    serial.close()
+    mcu_serial.close()
     print("gracefully handling shutdown... :)")
 
 

@@ -41,7 +41,6 @@ int main(void)
     i2c_rx_irq = false;
     i2c_tx_irq = false;
     read_from_rtc = false;
-    uart_tx_busy = false;
 
     // --------- Init locals ----------
     // Temp. sensor
@@ -242,7 +241,7 @@ int main(void)
         if(uart_txcpt_irq)
         {
             uart_txcpt_irq = false;
-            if(uart_tx_msg_buf[uart_tx_msg_idx - 1] == '\0')
+            if(uart_tx_msg_buf[uart_tx_msg_idx] == '\0')
             {   // Reset index, disable UART IRQ, enable TB1 IRQ
                 uart_tx_msg_idx = 0;
                 uart_tx_busy = false;
