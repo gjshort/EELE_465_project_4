@@ -23,7 +23,7 @@ For each file that contains generated code, fill out the following bullet points
 Here's a formatted example of what I want. Again, only the first two bullet points are required, though I appreciate any additional details you are willing to provide.
 
 - **Name of the file that contains generated code**: `i2c.c`
-- **Was the modified by you?**: yes
+- **Was the code modified by you?**: yes
 - **Names of functions that contain generated code**:
     - `i2c_init()`
     - `i2c_read()`
