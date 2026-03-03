@@ -54,7 +54,7 @@ float ring_buf_average(ring_buffer* ring_buf, uint8_t window)
     // Sum backwards through buffer 
     uint8_t count;
     uint8_t idx = ring_buf->head;
-    uint8_t sum = 0;
+    uint16_t sum = 0;
     for(count = 0; count < window_cpy; count++)
     {
         sum += ring_buf->data[idx--]; 

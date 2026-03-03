@@ -51,12 +51,25 @@ void ftoa_2(float data, char result[16])
         rev_int_part /= 10;
     }
 
+    // Handle case when one's place is 0 and
+    // reversing number removes it
+    if(int_part % 10 == 0)
+    {
+        result[digit_idx++] = '0';
+    }
+
     // Decimal point
     result[digit_idx++] = '.';
 
     // Fractional part (2 places truncated of precision)
     uint16_t frac_part = (uint16_t)((data - int_part) * 100);  // 0.12345 --> 12
     uint16_t rev_frac_part = reverse_digits(frac_part);
+
+    if(rev_frac_part == 0)
+    {
+        result[digit_idx++] = '0';
+    }
+
     while(rev_frac_part > 0)
     {
         result[digit_idx++] = (rev_frac_part % 10) + '0';

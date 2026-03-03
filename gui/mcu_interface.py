@@ -157,7 +157,7 @@ class App(tk.Tk):
         date_time = datetime.now()
 
         # Format according to how the MCU wants the date/time formatted
-        formatted_datetime = date_time.strftime("%Y/%m/%d %H:%M:%S")
+        formatted_datetime = date_time.strftime("t %H:%M:%S %m/%d/%y\r\n")
 
         # Push date/time string into the queue for the other thread to process
         self._gui_rtc_date_time_queue.put(formatted_datetime)
@@ -201,52 +201,51 @@ def mcu_interface_worker(
             this signals that we need to finish the thread and clean up so the
             main loop can join this thread and quit the program gracefully.
     """
-    TEMPERATURE_UPDATE_PERIOD = 1
-    last_temperature_update_time = 0
-    temperature = 1.0
-
     rtc_date_time = None
 
+    mcu_serial = serial.Serial('/dev/ttyUSB0', 57600)  # open serial port to MCU
+
     while not quit_event.is_set():
-        # Dummy for updating the temperature and time every 1 second.
-        # Most things in this if statement can be deleted.
-        current_time = time.time()
-        if current_time - last_temperature_update_time >= TEMPERATURE_UPDATE_PERIOD:
-            last_temperature_update_time = current_time
-            temperature = (temperature + 1) % 100
+        
+        # Parse MCU serial data
+        # Format: "{ID} {Data}\r\n"
+        try:
+            if(mcu_serial.in_waiting > 0):
+                mcu_msg = (mcu_serial.readline()).decode('utf-8')
+                #print(mcu_msg)
+                msg_fields = mcu_msg.split(' ', 1)
 
-            # Send the most recent temperature to the GUI.
-            temperature_queue.put(temperature)
+                if(msg_fields[0] == 't'):            # Time data, format: HH:MM:SS MM/DD/YY
+                    rtc_date_time = datetime.strptime(msg_fields[1], "%H:%M:%S %m/%d/%y\r\n")
+                    mcu_rtc_date_time_queue.put(rtc_date_time)
 
-            # You don't have to worry about what's happening here. This is just for testing.
-            # You should fetch the time from UART stream
-            if rtc_date_time:
-                date_time = datetime.strptime(rtc_date_time, "%Y/%m/%d %H:%M:%S")
+                elif(msg_fields[0] == 'c'):       # Temperature data, format: xx.xx
+                    new_avg_temp = float(msg_fields[1])
+                    temperature_queue.put(new_avg_temp)
+        except:
+            print("Error parsing message from MCU")
 
-                # Make time count backwards just for fun
-                seconds = date_time.second - 1
-                if seconds < 0:
-                    seconds = 59
-                date_time = date_time.replace(second=seconds)
 
-                rtc_date_time = date_time.strftime("%Y/%m/%d %H:%M:%S")
-
-                # Send the most recent RTC date/time to the GUI.
-                mcu_rtc_date_time_queue.put(rtc_date_time)
-
+        # Send time to RTC after receiving time from GUI
         if not gui_rtc_date_time_queue.empty():
             # We've received an updated date/time from the GUI.
             # Send the updated date/time to the MCU.
             rtc_date_time = gui_rtc_date_time_queue.get()
-            print(rtc_date_time)
+            time_bytes = rtc_date_time.encode('ascii')
+            print(time_bytes)
+            mcu_serial.write(time_bytes)
 
+        # Send window size to RTC
         if not moving_avg_window_size_queue.empty():
             # We've reaceived an updated moving avg window size from the GUI.
             # Send the updated window size to the MCU.
             moving_avg_window_size = moving_avg_window_size_queue.get()
-            print(f"window size = {moving_avg_window_size}")
+            window_str = ("w " + str(moving_avg_window_size) + "\r\n").encode('ascii')
+            print(window_str)
+            mcu_serial.write(window_str)
 
     # Gracefully close serial port here...
+    mcu_serial.close()
     print("gracefully handling shutdown... :)")
 
 
