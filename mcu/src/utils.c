@@ -54,8 +54,20 @@ void parse_uart_time_msg(char *buf, MCP7940N_time *rtc_time)
     token = strtok(NULL, "/");                          // Extract day
     rtc_time->date = DECtoBCD((uint8_t)atoi(token));
 
-    token = strtok(NULL, "\r\n");                          // Extract year
+    token = strtok(NULL, "\r");                          // Extract year
     rtc_time->year = DECtoBCD((uint8_t)atoi(token));
+}
+
+void parse_uart_window_msg(char *buf, uint8_t *temp_avg_window)
+{
+    char *token = strtok(buf + 2, "\r");
+    uint8_t window = (uint8_t)atoi(token);
+    if(window > 16)
+    {
+        window = 16;
+    }
+
+    *temp_avg_window = window;
 }
 
 /**

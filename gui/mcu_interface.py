@@ -240,7 +240,9 @@ def mcu_interface_worker(
             # We've reaceived an updated moving avg window size from the GUI.
             # Send the updated window size to the MCU.
             moving_avg_window_size = moving_avg_window_size_queue.get()
-            print(f"window size = {moving_avg_window_size}")
+            window_str = ("w " + str(moving_avg_window_size) + "\r\n").encode('ascii')
+            print(window_str)
+            mcu_serial.write(window_str)
 
     # Gracefully close serial port here...
     mcu_serial.close()

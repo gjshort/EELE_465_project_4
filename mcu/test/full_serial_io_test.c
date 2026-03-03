@@ -49,6 +49,7 @@ int main(void)
     // Temp. sensor
     uint16_t lmt87_temp;
     ring_buffer temp_buf = {{0}, 0};    // Ring buffer of temps
+    uint8_t temp_avg_window = 5;
     float lmt87_temp_avg;
     char lmt87_temp_str[8] = {0};       // Avg. temp in ASCII
 
@@ -148,9 +149,6 @@ int main(void)
                 if(rtc_reg_idx == RTC_NUM_TIME_REGS)    // Done writing
                 {
                     rtc_reg_idx = 0;
-                    // Enable TB1 IRQ after writing
-                    TB1CCTL0 &= ~CCIFG;     
-                    TB1CCTL0 |= CCIE;
                 }
                 else                                    // Still writing
                 {
@@ -199,7 +197,7 @@ int main(void)
             // Add new value to ring buf, re-average the buffer with
             // a specified window and then convert avg. to string
             ring_buf_push(&temp_buf, lmt87_temp);
-            lmt87_temp_avg = ring_buf_average(&temp_buf, 5);
+            lmt87_temp_avg = ring_buf_average(&temp_buf, temp_avg_window);
 
             // Clear string buffer then put new avg. temp into it in ASCII
             for(i = 0; i < sizeof(lmt87_temp_str); i++) 
@@ -279,12 +277,20 @@ int main(void)
                     rtc_mode = I2C_WRITE;
                     write_to_rtc = true;
                     break;
-                case ID_TEMP:
+                case ID_WINDOW:
+                    parse_uart_window_msg(uart_rx_msg_buf, &temp_avg_window);
                     break;
                 case ID_ERR:
                     break;
                 default:
                     break;
+                }
+                
+                // Zero-out Rx Buffer
+                uint8_t i;
+                for(i = 0; i < sizeof(uart_rx_msg_buf); i++)
+                {
+                    uart_rx_msg_buf[i] = '\0';
                 }
             }
             else 
