@@ -60,3 +60,7 @@ targetConfigs/
 
 # Draw.io
 *drawio.bkp
+
+# Python Environment
+*.spec
+uv.lock
