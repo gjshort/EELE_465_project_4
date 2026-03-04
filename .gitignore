@@ -59,7 +59,7 @@ targetConfigs/
 .DS_Store
 
 # Draw.io
-*drawio.bkp
+*.drawio.bkp
 
 # Python Environment
 *.spec
